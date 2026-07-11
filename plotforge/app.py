@@ -10,7 +10,8 @@ from __future__ import annotations
 import dash
 import dash_bootstrap_components as dbc
 
-from plotforge.callbacks import data_callbacks
+import plotforge.plots  # noqa: F401  (imports register all chart types)
+from plotforge.callbacks import data_callbacks, plot_callbacks
 from plotforge.ui.layout import build_layout
 
 
@@ -26,4 +27,5 @@ def create_app() -> dash.Dash:
     )
     app.layout = build_layout()
     data_callbacks.register_callbacks(app)
+    plot_callbacks.register_callbacks(app)
     return app
