@@ -14,4 +14,13 @@ from plotforge.plots import (  # noqa: F401  # isort:skip
     line,
     bar,
     histogram,
+    box,
+    violin,
+    strip,
+    heatmap,
+    density,
+    ecdf,
+    area,
+    pie,
+    errorbar,
 )

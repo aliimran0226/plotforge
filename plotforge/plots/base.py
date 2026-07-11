@@ -129,8 +129,16 @@ class BasePlot(ABC):
         return {opt.name: opt.default for opt in cls.extra_options}
 
     @classmethod
-    def validate(cls, mapping: dict[str, str], column_types: dict[str, str]) -> None:
+    def validate(
+        cls,
+        mapping: dict[str, str],
+        column_types: dict[str, str],
+        options: dict[str, object] | None = None,
+    ) -> None:
         """Check required slots are filled and column kinds are allowed.
+
+        ``options`` lets plots whose requirements depend on a mode option
+        (e.g. heatmap wide vs long) override this with custom checks.
 
         Raises:
             PlotError: With a message naming the offending slot/column.

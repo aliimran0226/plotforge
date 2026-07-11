@@ -46,7 +46,9 @@ def test_every_plot_declares_ui_metadata():
     """The UI is generated from these attributes - they must exist."""
     for name, cls in all_plots().items():
         assert cls.label, f"{name} missing label"
-        assert cls.required_mappings, f"{name} declares no required mappings"
+        # A plot may have no *required* mappings (heatmap's depend on its
+        # wide/long mode), but it must declare some mapping slots.
+        assert cls.all_mappings(), f"{name} declares no mappings at all"
         for spec in cls.all_mappings():
             assert isinstance(spec, MappingSpec)
             assert spec.kinds, f"{name}.{spec.name} accepts no column kinds"

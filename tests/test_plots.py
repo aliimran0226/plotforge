@@ -20,6 +20,15 @@ SMOKE_MAPPINGS: dict[str, dict[str, str]] = {
     "line": {"x": "measured_on", "y": "response", "color": "group"},
     "bar": {"x": "group", "y": "response", "color": "batch"},
     "histogram": {"x": "response", "color": "group"},
+    "box": {"y": "response", "x": "group", "color": "batch"},
+    "violin": {"y": "response", "x": "group", "color": "batch"},
+    "strip": {"y": "response", "x": "group", "color": "batch"},
+    "heatmap": {"x": "group", "y": "batch", "z": "response"},
+    "density": {"x": "dose", "y": "response"},
+    "ecdf": {"x": "response", "color": "group"},
+    "area": {"x": "measured_on", "y": "response", "color": "group"},
+    "pie": {"names": "group", "values": "dose"},
+    "errorbar": {"x": "dose", "y": "response", "error_y": "response_err"},
 }
 
 
@@ -42,6 +51,8 @@ def test_plot_builds_figure(name, sample_df):
 def test_plot_builds_without_optional_mappings(name, sample_df):
     """Required mappings alone must be enough to build."""
     plot_cls = get_plot(name)
+    if not plot_cls.required_mappings:
+        pytest.skip(f"{name} has mode-dependent requirements")
     mapping = {
         spec.name: SMOKE_MAPPINGS[name][spec.name]
         for spec in plot_cls.required_mappings
@@ -86,3 +97,79 @@ def test_scatter_facets(sample_df):
     )
     # Faceting produces one x-axis per facet column value.
     assert len(fig.layout.annotations) >= 2
+
+
+# ---------------------------------------------------------------------------
+# Type-specific behaviors added with the full chart set
+# ---------------------------------------------------------------------------
+
+
+def test_heatmap_long_counts_when_no_z(sample_df):
+    heat = get_plot("heatmap")
+    fig = heat.build(sample_df, {"x": "group", "y": "batch"}, merged_options(heat, {}))
+    assert fig.data[0].type == "heatmap"
+
+
+def test_heatmap_wide_matrix(sample_df):
+    heat = get_plot("heatmap")
+    opts = merged_options(heat, {"wide": True})
+    fig = heat.build(sample_df, {"row_label": "group"}, opts)
+    assert fig.data[0].type == "heatmap"
+
+
+def test_heatmap_validate_long_needs_xy(sample_df):
+    from plotforge.plots.base import PlotError
+
+    heat = get_plot("heatmap")
+    types = {"group": "categorical", "batch": "categorical"}
+    with pytest.raises(PlotError, match="Wide matrix"):
+        heat.validate({}, types, merged_options(heat, {}))
+    # Wide mode is fine without x/y.
+    heat.validate({}, types, merged_options(heat, {"wide": True}))
+
+
+def test_pie_counts_when_no_values(sample_df):
+    pie = get_plot("pie")
+    fig = pie.build(sample_df, {"names": "group"}, merged_options(pie, {}))
+    assert sum(fig.data[0].values) == len(sample_df)
+
+
+def test_pie_donut_hole(sample_df):
+    pie = get_plot("pie")
+    fig = pie.build(sample_df, {"names": "group"}, merged_options(pie, {"hole": 0.4}))
+    assert fig.data[0].hole == 0.4
+
+
+def test_errorbar_carries_error_column(sample_df):
+    eb = get_plot("errorbar")
+    fig = eb.build(
+        sample_df,
+        {"x": "dose", "y": "response", "error_y": "response_err"},
+        merged_options(eb, {}),
+    )
+    assert fig.data[0].error_y.array is not None
+
+
+def test_density_kinds(sample_df):
+    dens = get_plot("density")
+    for kind, trace_type in [
+        ("contour", "histogram2dcontour"),
+        ("filled", "histogram2dcontour"),
+        ("histogram", "histogram2d"),
+    ]:
+        fig = dens.build(
+            sample_df,
+            {"x": "dose", "y": "response"},
+            merged_options(dens, {"kind": kind}),
+        )
+        assert fig.data[0].type == trace_type
+
+
+def test_box_points_none_maps_to_false(sample_df):
+    box = get_plot("box")
+    fig = box.build(
+        sample_df,
+        {"y": "response", "x": "group"},
+        merged_options(box, {"points": "none"}),
+    )
+    assert fig.data[0].boxpoints is False

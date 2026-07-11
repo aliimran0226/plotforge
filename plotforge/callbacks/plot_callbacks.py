@@ -56,8 +56,8 @@ def build_figure(
     """
     plot_cls = get_plot(chart_type)
     mapping = clean_mapping(mapping)
-    plot_cls.validate(mapping, dataset.column_types)
     options = merged_options(plot_cls, options)
+    plot_cls.validate(mapping, dataset.column_types, options)
     fig = plot_cls.build(dataset.df, mapping, options)
     return apply_style(fig, style or style_model.StyleModel())
 
