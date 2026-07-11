@@ -12,6 +12,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from plotforge import __version__
+from plotforge.ui.controls_data import build_data_controls
 
 
 def _placeholder(section: str) -> html.Div:
@@ -26,7 +27,7 @@ def build_layout() -> dbc.Container:
     """Return the full page layout for the Dash app."""
     sidebar = dbc.Accordion(
         [
-            dbc.AccordionItem(_placeholder("Data"), title="1. Data", item_id="data"),
+            dbc.AccordionItem(build_data_controls(), title="1. Data", item_id="data"),
             dbc.AccordionItem(_placeholder("Chart"), title="2. Chart", item_id="chart"),
             dbc.AccordionItem(_placeholder("Style"), title="3. Style", item_id="style"),
             dbc.AccordionItem(
