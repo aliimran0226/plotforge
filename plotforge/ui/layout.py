@@ -13,16 +13,9 @@ from dash import dcc, html
 
 from plotforge import __version__
 from plotforge.ui.controls_data import build_data_controls
+from plotforge.ui.controls_export import build_export_controls
 from plotforge.ui.controls_mapping import build_chart_controls
 from plotforge.ui.controls_style import build_style_controls
-
-
-def _placeholder(section: str) -> html.Div:
-    """Temporary section body used until the real controls land."""
-    return html.Div(
-        html.Em(f"{section} controls coming soon."),
-        className="text-muted p-2",
-    )
 
 
 def build_layout() -> dbc.Container:
@@ -37,7 +30,7 @@ def build_layout() -> dbc.Container:
                 build_style_controls(), title="3. Style", item_id="style"
             ),
             dbc.AccordionItem(
-                _placeholder("Export"), title="4. Export", item_id="export"
+                build_export_controls(), title="4. Export", item_id="export"
             ),
         ],
         active_item="data",
