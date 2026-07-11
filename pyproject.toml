@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plotforge"
+version = "0.1.0"
+description = "Local browser-based playground for building publication-ready figures from CSV/TSV/Excel data"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "dash>=3.0",
+    "dash-bootstrap-components>=2.0",
+    "plotly>=6.0",
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+    "kaleido>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "black>=24.0",
+    "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+include = ["plotforge*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]  # long lines are handled by black; allow long strings/URLs
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
