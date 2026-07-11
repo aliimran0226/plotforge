@@ -6,8 +6,8 @@ Two callbacks:
    chart-specific option widgets whenever the chart type or the dataset
    changes, carrying over compatible selections.
 2. ``render_figure`` - the single live-update callback: reads the
-   current mapping + options, asks the registry to build the figure,
-   and renders it. (Phase 4 adds style inputs here.)
+   current mapping + options + style controls, asks the registry to
+   build the figure, passes it through ``apply_style``, and renders it.
 """
 
 from __future__ import annotations
@@ -15,10 +15,11 @@ from __future__ import annotations
 import dash
 from dash import ALL, Input, Output, State, dcc, html
 
-from plotforge import config
 from plotforge.data import store
 from plotforge.plots.base import PlotError, clean_mapping, merged_options
 from plotforge.plots.registry import all_plots, get_plot
+from plotforge.styling import style_model
+from plotforge.styling.apply import apply_style
 from plotforge.ui import controls_mapping
 
 #: dcc.Graph config: keep the modebar's PNG download as a quick fallback
@@ -41,25 +42,24 @@ def _no_data_placeholder() -> html.P:
     )
 
 
-def build_figure(chart_type: str, dataset: store.Dataset, mapping: dict, options: dict):
-    """Pure figure-building path shared by render and (later) export.
+def build_figure(
+    chart_type: str,
+    dataset: store.Dataset,
+    mapping: dict,
+    options: dict,
+    style: style_model.StyleModel | None = None,
+):
+    """Pure figure-building path shared by render and export.
 
-    Returns a plotly Figure. Raises PlotError for user-fixable issues.
+    Returns a fully styled plotly Figure. Raises PlotError for
+    user-fixable issues.
     """
     plot_cls = get_plot(chart_type)
     mapping = clean_mapping(mapping)
     plot_cls.validate(mapping, dataset.column_types)
     options = merged_options(plot_cls, options)
     fig = plot_cls.build(dataset.df, mapping, options)
-    # Baseline geometry/template; the full style pass replaces this in
-    # the styling phase.
-    fig.update_layout(
-        template=config.TEMPLATE,
-        width=config.FIGURE_WIDTH,
-        height=config.FIGURE_HEIGHT,
-        margin=config.MARGIN,
-    )
-    return fig
+    return apply_style(fig, style or style_model.StyleModel())
 
 
 def register_callbacks(app: dash.Dash) -> None:
@@ -103,8 +103,12 @@ def register_callbacks(app: dash.Dash) -> None:
         Input("chart-type", "value"),
         Input({"type": "mapping", "name": ALL}, "value"),
         Input({"type": "plot-opt", "name": ALL}, "value"),
+        Input({"type": "style", "field": ALL}, "value"),
+        Input({"type": "group-color", "group": ALL}, "value"),
     )
-    def render_figure(token, chart_type, _mapping_values, _option_values):
+    def render_figure(
+        token, chart_type, _mapping_values, _option_values, _style_values, _group_colors
+    ):
         """Rebuild the figure from the current control values."""
         dataset = store.get(token)
         if dataset is None or not chart_type or chart_type not in all_plots():
@@ -118,8 +122,18 @@ def register_callbacks(app: dash.Dash) -> None:
         if not mapping:
             raise dash.exceptions.PreventUpdate
 
+        style_values = {
+            item["id"]["field"]: item.get("value") for item in dash.ctx.inputs_list[4]
+        }
+        group_colors = {
+            item["id"]["group"]: item.get("value")
+            for item in dash.ctx.inputs_list[5]
+            if item.get("value")
+        }
+        style = style_model.from_values(style_values, group_colors)
+
         try:
-            fig = build_figure(chart_type, dataset, mapping, options)
+            fig = build_figure(chart_type, dataset, mapping, options, style)
         except PlotError as exc:
             return dash.no_update, str(exc), True
         except Exception as exc:  # never leak a traceback to the UI

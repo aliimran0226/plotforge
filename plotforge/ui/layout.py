@@ -14,6 +14,7 @@ from dash import dcc, html
 from plotforge import __version__
 from plotforge.ui.controls_data import build_data_controls
 from plotforge.ui.controls_mapping import build_chart_controls
+from plotforge.ui.controls_style import build_style_controls
 
 
 def _placeholder(section: str) -> html.Div:
@@ -32,7 +33,9 @@ def build_layout() -> dbc.Container:
             dbc.AccordionItem(
                 build_chart_controls(), title="2. Chart", item_id="chart"
             ),
-            dbc.AccordionItem(_placeholder("Style"), title="3. Style", item_id="style"),
+            dbc.AccordionItem(
+                build_style_controls(), title="3. Style", item_id="style"
+            ),
             dbc.AccordionItem(
                 _placeholder("Export"), title="4. Export", item_id="export"
             ),

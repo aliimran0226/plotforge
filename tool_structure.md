@@ -40,6 +40,12 @@ Each chart type is one module defining a `BasePlot` subclass registered via the 
 ### 2026-07-11 — StyleModel as single source of truth
 All style options live as fields on one dataclass (`styling/style_model.py`), with defaults sourced from `config.py`. One `apply_style(fig, style)` function applies them to any figure, so styling is uniform across chart types and adding an option touches a known, small set of places.
 
+### 2026-07-11 — Style controls are authoritative, except "auto"-less colors
+Style controls apply exactly what they show (a gridline toggle wins over the template). The exception: background and gridline *colors* only apply when moved off the PlotForge default, because an `<input type=color>` cannot express "automatic" — otherwise picking a template like `seaborn` would instantly lose its signature background to our default white. Trade-off: re-picking exactly the default color is not treated as an override.
+
+### 2026-07-11 — Palette recoloring happens post-build
+plotly.express bakes concrete colors into traces, so `layout.colorway` alone cannot re-palette a built figure. `apply_style` therefore reassigns trace colors from the chosen palette (by legend-group first-appearance order), which is also where per-group manual overrides hook in. Plot modules stay color-agnostic.
+
 ### 2026-07-11 — App factory pattern
 `create_app()` builds the app rather than a module-level singleton, so tests can construct isolated instances and `run.py` stays trivial.
 
