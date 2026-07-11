@@ -6,10 +6,12 @@ what makes its chart type appear in the UI - see ``registry.py`` and
 the "How to add a new chart type" recipe in README_DEV.md.
 """
 
-# Import order = order in the chart-type dropdown.
-from plotforge.plots import (  # noqa: F401
+# Import order = order in the chart-type dropdown (first entry is the
+# default chart), so keep this list deliberately ordered.
+# isort:skip is required to stop the formatter re-alphabetizing it.
+from plotforge.plots import (  # noqa: F401  # isort:skip
+    scatter,
+    line,
     bar,
     histogram,
-    line,
-    scatter,
 )
