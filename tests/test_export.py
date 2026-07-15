@@ -59,3 +59,30 @@ def test_export_jpg_magic():
     except Exception as exc:  # pragma: no cover - environment-dependent
         pytest.skip(f"kaleido unavailable here: {exc}")
     assert img[:3] == b"\xff\xd8\xff"
+
+
+def test_export_svg_magic():
+    try:
+        img = export_figure_bytes(_small_fig(), "svg", 300, 200, 1)
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        pytest.skip(f"kaleido unavailable here: {exc}")
+    assert b"<svg" in img[:300]
+
+
+def test_export_pdf_magic():
+    try:
+        img = export_figure_bytes(_small_fig(), "pdf", 300, 200, 1)
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        pytest.skip(f"kaleido unavailable here: {exc}")
+    assert img[:5] == b"%PDF-"
+
+
+@pytest.mark.parametrize(
+    ("raw", "fmt", "expected"),
+    [
+        ("results.svg", "pdf", "results.pdf"),
+        ("results.pdf", "svg", "results.svg"),
+    ],
+)
+def test_sanitize_filename_vector_extensions(raw, fmt, expected):
+    assert sanitize_filename(raw, fmt) == expected

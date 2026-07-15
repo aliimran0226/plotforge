@@ -2,11 +2,11 @@
 
 **A local playground for building publication-ready figures — no coding required.**
 
-PlotForge runs on your own computer and opens in your browser. Upload a CSV, TSV, or Excel file, pick a chart type, map your columns, fine-tune every visual detail live, and export a high-resolution PNG or JPG ready for a paper, poster, or slide deck.
+PlotForge runs on your own computer and opens in your browser. Upload a CSV, TSV, or Excel file, pick a chart type, map your columns, fine-tune every visual detail live, and export a high-resolution PNG/JPG or vector SVG/PDF ready for a paper, poster, or slide deck.
 
 - 13 chart types: scatter, line, bar, histogram, box, violin, strip/jitter, heatmap, 2D density, ECDF, area, pie, and error-bar plots
 - Deep styling: sizes, fonts, titles, per-axis ranges/log/ticks/grids, color palettes (including colorblind-safe), per-group colors, legend placement, templates
-- High-DPI export at any pixel size with a 1–5× scale factor
+- High-DPI export at any pixel size with a 1–5× scale factor, plus vector SVG/PDF output
 - Your data never leaves your machine
 
 ## Installation
@@ -75,7 +75,7 @@ Six collapsible groups of controls, all live:
 
 ### 4. Export — save the figure
 
-Set the output size in pixels, a **scale factor** (pixel multiplier for high-DPI output — scale 3 of a 1200×800 figure yields 3600×2400 px, roughly 300 DPI at print size), the format (PNG or JPG), and a filename, then click **Export figure**. The download uses exactly the figure and style you see, rendered at the export size rather than the on-screen size.
+Set the output size in pixels, a **scale factor** (pixel multiplier for high-DPI output — scale 3 of a 1200×800 figure yields 3600×2400 px, roughly 300 DPI at print size), the format (PNG, JPG, or vector SVG/PDF — vector formats stay sharp at any size and are what most journals prefer), and a filename, then click **Export figure**. The download uses exactly the figure and style you see, rendered at the export size rather than the on-screen size.
 
 The small camera icon in the figure's toolbar also saves a quick screen-resolution PNG.
 

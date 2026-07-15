@@ -82,7 +82,6 @@ Step-by-step guides (new chart type, new style option, new file format) live in 
 
 ## Known limitations / future ideas
 
-- SVG/PDF export (kaleido supports it; only PNG/JPG exposed initially)
 - Background/gridline color pickers can't express "auto", so re-picking the exact default color is not treated as an override (see the style-controls decision above)
 - Figure "recipes" (save/load a mapping+style configuration)
 - Multi-panel figure composition

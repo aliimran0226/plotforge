@@ -21,6 +21,9 @@ from plotforge.styling import style_model
 #: Characters allowed in a download filename; everything else becomes '_'.
 _FILENAME_SAFE = re.compile(r"[^A-Za-z0-9._-]+")
 
+#: Export formats kaleido can render; svg/pdf are vector (scale-free).
+EXPORT_FORMATS = ("png", "jpg", "svg", "pdf")
+
 
 def sanitize_filename(name: str | None, fmt: str) -> str:
     """Turn user input into a safe '<name>.<fmt>' download filename."""
@@ -28,7 +31,7 @@ def sanitize_filename(name: str | None, fmt: str) -> str:
     if not base:
         base = "figure"
     # Drop a typed extension; the format dropdown decides it.
-    for ext in (".png", ".jpg", ".jpeg"):
+    for ext in (".png", ".jpg", ".jpeg", ".svg", ".pdf"):
         if base.lower().endswith(ext):
             base = base[: -len(ext)]
     return f"{base}.{fmt}"
@@ -92,7 +95,7 @@ def register_callbacks(app: dash.Dash) -> None:
         }
         style = style_model.from_values(style_values, group_colors)
 
-        fmt = fmt if fmt in ("png", "jpg") else "png"
+        fmt = fmt if fmt in EXPORT_FORMATS else "png"
         width = int(width or style.width)
         height = int(height or style.height)
         scale = min(max(int(scale or 1), 1), 5)

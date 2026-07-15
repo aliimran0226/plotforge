@@ -68,6 +68,8 @@ def build_export_controls() -> html.Div:
                 options=[
                     {"label": "PNG", "value": "png"},
                     {"label": "JPG", "value": "jpg"},
+                    {"label": "SVG (vector)", "value": "svg"},
+                    {"label": "PDF (vector)", "value": "pdf"},
                 ],
                 value=config.EXPORT_FORMAT,
                 clearable=False,
