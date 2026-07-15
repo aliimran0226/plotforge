@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "plotforge"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local browser-based playground for building publication-ready figures from CSV/TSV/Excel data"
 readme = "README.md"
 requires-python = ">=3.10"
