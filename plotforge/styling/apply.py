@@ -78,7 +78,44 @@ def apply_style(fig: go.Figure, style: StyleModel) -> go.Figure:
     _apply_axis(fig, style, "y")
     _apply_colors(fig, style)
     _apply_legend(fig, style)
+    _apply_outer_border(fig, style)
     return fig
+
+
+def _apply_outer_border(fig: go.Figure, style: StyleModel) -> None:
+    """Rectangle around the whole figure canvas (margins included).
+
+    Paper coordinates (0..1) span only the plot region, so the canvas
+    edges are reached by extending past them by margin/plot-size - which
+    needs a concrete figure size. Auto-sized figures fall back to
+    framing the plot region. The half-line-width inset keeps the border
+    fully inside the canvas instead of clipped on the edge.
+    """
+    if not style.outer_border_on:
+        return
+    half = style.outer_border_width / 2
+    if style.width and style.height:
+        pw = max(style.width - style.margin_l - style.margin_r, 1)
+        ph = max(style.height - style.margin_t - style.margin_b, 1)
+        x0 = (-style.margin_l + half) / pw
+        x1 = 1 + (style.margin_r - half) / pw
+        y0 = (-style.margin_b + half) / ph
+        y1 = 1 + (style.margin_t - half) / ph
+    else:
+        x0 = y0 = 0.0
+        x1 = y1 = 1.0
+    fig.add_shape(
+        type="rect",
+        xref="paper",
+        yref="paper",
+        x0=x0,
+        y0=y0,
+        x1=x1,
+        y1=y1,
+        line=dict(color=style.outer_border_color, width=style.outer_border_width),
+        fillcolor="rgba(0,0,0,0)",
+        layer="above",
+    )
 
 
 def _apply_title(fig: go.Figure, style: StyleModel) -> None:
@@ -133,9 +170,14 @@ def _apply_axis(fig: go.Figure, style: StyleModel, which: str) -> None:
         showgrid=s["grid"],
         zeroline=s["zeroline"],
         showline=s["line"],
+        linewidth=style.axis_line_width,
         mirror=s["mirror"],
+        ticklen=s["tick_len"],
+        tickwidth=s["tick_width"],
         title_font_size=style.axis_title_size,
     )
+    if s["ticks"]:  # "" = leave the template's tick style alone
+        kwargs["ticks"] = "" if s["ticks"] == "none" else s["ticks"]
     if s["title"]:
         # Only the outer/first axis gets the title override; px already
         # titles facet axes sensibly, and update_*axes would title all.

@@ -99,6 +99,9 @@ def register_callbacks(app: dash.Dash) -> None:
         width = int(width or style.width)
         height = int(height or style.height)
         scale = min(max(int(scale or 1), 1), 5)
+        # Bake the export size into the style so size-dependent styling
+        # (the outer border offsets) is computed for the exported canvas.
+        style.width, style.height = width, height
 
         try:
             fig = build_figure(chart_type, dataset, mapping, options, style)

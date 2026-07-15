@@ -57,6 +57,21 @@ def _axis_entries(p: str) -> list[tuple]:
             "text",
             {},
         ),
+        (
+            f"{p}_ticks",
+            "Tick marks",
+            "dropdown",
+            {
+                "choices": [
+                    ("Template default", ""),
+                    ("Outside", "outside"),
+                    ("Inside", "inside"),
+                    ("Hidden", "none"),
+                ]
+            },
+        ),
+        (f"{p}_tick_len", "Tick length", "number", {"min": 0, "max": 30}),
+        (f"{p}_tick_width", "Tick width", "number", {"min": 0.5, "max": 8}),
         (f"{p}_grid", "Gridlines", "checkbox", {}),
         (f"{p}_grid_color", "Gridline color", "color", {}),
         (f"{p}_zeroline", "Zero line", "checkbox", {}),
@@ -78,6 +93,15 @@ _SECTIONS: list[tuple[str, list[tuple]]] = [
             ("margin_r", "Margin right", "number", {"min": 0, "max": 400}),
             ("margin_t", "Margin top", "number", {"min": 0, "max": 400}),
             ("margin_b", "Margin bottom", "number", {"min": 0, "max": 400}),
+            ("outer_border_on", "Border around figure", "checkbox", {}),
+            ("outer_border_color", "Border color", "color", {}),
+            ("outer_border_width", "Border width", "number", {"min": 0.5, "max": 12}),
+            (
+                "axis_line_width",
+                "Axis line width",
+                "number",
+                {"min": 0.5, "max": 8},
+            ),
         ],
     ),
     (

@@ -35,6 +35,10 @@ class StyleModel:
     margin_r: int = config.MARGIN["r"]
     margin_t: int = config.MARGIN["t"]
     margin_b: int = config.MARGIN["b"]
+    outer_border_on: bool = False  # border around the whole figure canvas
+    outer_border_color: str = "#000000"
+    outer_border_width: float = 1.5
+    axis_line_width: float = 1.0  # width of axis lines (both axes)
 
     # --- Titles & fonts ----------------------------------------------------
     title_text: str = ""  # "" = no title
@@ -52,6 +56,9 @@ class StyleModel:
     x_tick_size: int = config.TICK_FONT_SIZE
     x_tick_angle: float | None = None  # None = automatic
     x_tick_format: str = ""  # d3-format / strftime string
+    x_ticks: str = ""  # tick marks: "" = template default | outside | inside | none
+    x_tick_len: int = 5
+    x_tick_width: float = 1.0
     x_grid: bool = True
     x_grid_color: str = "#e5e5e5"
     x_zeroline: bool = False
@@ -67,6 +74,9 @@ class StyleModel:
     y_tick_size: int = config.TICK_FONT_SIZE
     y_tick_angle: float | None = None
     y_tick_format: str = ""
+    y_ticks: str = ""
+    y_tick_len: int = 5
+    y_tick_width: float = 1.0
     y_grid: bool = True
     y_grid_color: str = "#e5e5e5"
     y_zeroline: bool = False

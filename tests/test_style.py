@@ -167,6 +167,33 @@ def test_axis_title_override_hits_all_facets(sample_df):
     assert titles and all(t == "Dose (mg)" for t in titles)
 
 
+def test_outer_border_shape(grouped_fig):
+    style = style_model.StyleModel(outer_border_on=True, outer_border_color="#222222")
+    fig = apply_style(grouped_fig, style)
+    rects = [s for s in fig.layout.shapes if s.type == "rect" and s.xref == "paper"]
+    assert len(rects) == 1
+    border = rects[0]
+    assert border.line.color == "#222222"
+    # Extends past the paper domain (0..1) to cover the margins.
+    assert border.x0 < 0 and border.x1 > 1
+    assert border.y0 < 0 and border.y1 > 1
+
+
+def test_no_border_by_default(grouped_fig):
+    fig = apply_style(grouped_fig, style_model.StyleModel())
+    assert not [s for s in fig.layout.shapes if s.type == "rect"]
+
+
+def test_tick_marks_and_line_width(grouped_fig):
+    style = style_model.StyleModel(x_ticks="outside", x_tick_len=8, axis_line_width=2.5)
+    fig = apply_style(grouped_fig, style)
+    assert fig.layout.xaxis.ticks == "outside"
+    assert fig.layout.xaxis.ticklen == 8
+    assert fig.layout.xaxis.linewidth == 2.5
+    # y kept the template's tick style ("" field -> untouched).
+    assert fig.layout.yaxis.ticks is None
+
+
 def test_apply_representative_everything(grouped_fig):
     """One pass with most options set - must not raise."""
     style = style_model.StyleModel(

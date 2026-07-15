@@ -64,6 +64,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-15 — Outer figure border as a paper-coordinate shape
+Plotly has no "canvas border" property, and paper coordinates (0..1) span only the plot region. The outer border is therefore a rect shape extended past the paper domain by `margin / plot-size` — which requires a concrete figure size, so the export callback now bakes the export width/height into the StyleModel before building (rendered output is identical; kaleido's size args agree with the layout). Auto-sized figures fall back to framing the plot region. Tick-mark style is a dropdown whose empty value means "leave the template alone" — the same "auto"-capable-control reasoning as the background colors.
+
 ### 2026-07-15 — Upload contents are cleared after ingest; sheet switches read the cache
 `dcc.Upload` only fires when its contents *change*, so uploading the same file twice was a silent no-op. The upload callback now also outputs `data-upload.contents = None` (its own input — Dash allows the self-loop; the echo is absorbed by the existing empty-contents guard). Consequence: the sheet-switch callback can no longer read the upload contents, so it re-parses from `Dataset.raw` in the server-side cache instead — which is why the raw bytes were cached in the first place. One-sided axis ranges are now honored too, via plotly's `autorange: "min"/"max"` partial modes; apply_style leaves `autorange` untouched when the user expressed no opinion (px.imshow's reversed y axis depends on that).
 
