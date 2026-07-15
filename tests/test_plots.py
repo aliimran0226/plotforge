@@ -134,6 +134,50 @@ def test_pie_counts_when_no_values(sample_df):
     assert sum(fig.data[0].values) == len(sample_df)
 
 
+def test_pie_aggregates_duplicate_categories(sample_df):
+    # Regression: px.pie does not merge duplicate names itself, which
+    # left duplicate slices and misaligned per-slice colors.
+    pie = get_plot("pie")
+    fig = pie.build(
+        sample_df, {"names": "group", "values": "response"}, merged_options(pie, {})
+    )
+    labels = list(fig.data[0].labels)
+    assert len(labels) == len(set(labels))
+    assert sum(fig.data[0].values) == pytest.approx(sample_df["response"].sum())
+
+
+def test_pie_rejects_too_many_slices(sample_df):
+    import pandas as pd
+
+    from plotforge.plots.base import PlotError
+
+    pie = get_plot("pie")
+    df = pd.DataFrame({"id": [f"row{i}" for i in range(200)]})
+    with pytest.raises(PlotError, match="slices"):
+        pie.build(df, {"names": "id"}, merged_options(pie, {}))
+
+
+def test_bar_counts_with_column_named_count(sample_df):
+    # Regression: a real column named 'count' collided with the derived
+    # count column and crashed the groupby/rename path.
+    bar = get_plot("bar")
+    df = sample_df.rename(columns={"group": "count"})
+    fig = bar.build(df, {"x": "count"}, merged_options(bar, {}))
+    assert sum(sum(trace.y) for trace in fig.data) == len(df)
+
+
+def test_density_filled_rejects_color_grouping(sample_df):
+    from plotforge.plots.base import PlotError
+
+    dens = get_plot("density")
+    types = {"dose": "numeric", "response": "numeric", "group": "categorical"}
+    mapping = {"x": "dose", "y": "response", "color": "group"}
+    with pytest.raises(PlotError, match="[Ff]illed"):
+        dens.validate(mapping, types, merged_options(dens, {"kind": "filled"}))
+    # Contour lines with color grouping stay allowed.
+    dens.validate(mapping, types, merged_options(dens, {"kind": "contour"}))
+
+
 def test_pie_donut_hole(sample_df):
     pie = get_plot("pie")
     fig = pie.build(sample_df, {"names": "group"}, merged_options(pie, {"hole": 0.4}))

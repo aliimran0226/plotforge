@@ -13,6 +13,7 @@ from plotforge.plots.base import (
     BasePlot,
     MappingSpec,
     OptionSpec,
+    PlotError,
     clean_mapping,
 )
 from plotforge.plots.registry import register_plot
@@ -44,6 +45,18 @@ class DensityPlot(BasePlot):
         OptionSpec("nbinsx", "X bins", "number", default=None, min=2, max=200),
         OptionSpec("nbinsy", "Y bins", "number", default=None, min=2, max=200),
     )
+
+    @classmethod
+    def validate(cls, mapping, column_types, options=None) -> None:
+        super().validate(mapping, column_types, options)
+        # px forbids filled contours with a discrete color mapping (the
+        # groups' fills would hide each other), so refuse it up front.
+        if (options or {}).get("kind") == "filled" and mapping.get("color"):
+            raise PlotError(
+                "Filled contours cannot be split by 'Color / group' - the "
+                "filled regions would hide each other. Switch the "
+                "representation to contour lines, or clear the Color mapping."
+            )
 
     @classmethod
     def build(cls, df: pd.DataFrame, mapping: dict, options: dict) -> go.Figure:

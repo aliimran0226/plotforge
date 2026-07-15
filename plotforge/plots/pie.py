@@ -6,8 +6,19 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from plotforge.plots.base import BasePlot, MappingSpec, OptionSpec, clean_mapping
+from plotforge import config
+from plotforge.plots.base import (
+    BasePlot,
+    MappingSpec,
+    OptionSpec,
+    PlotError,
+    clean_mapping,
+)
 from plotforge.plots.registry import register_plot
+
+#: Internal name for the derived count column; guaranteed not to collide
+#: with a real column (px shows it as 'count' via labels=).
+_COUNT_COL = "__plotforge_count__"
 
 
 @register_plot
@@ -49,15 +60,29 @@ class PiePlot(BasePlot):
     @classmethod
     def build(cls, df: pd.DataFrame, mapping: dict, options: dict) -> go.Figure:
         m = clean_mapping(mapping)
-        plot_df = df
-        if "values" not in m:
-            # px.pie does not aggregate on its own: with no values column
-            # every row becomes a slice, so count rows per category here.
-            plot_df = df[m["names"]].value_counts().reset_index(name="count")
-            m = {"names": m["names"], "values": "count"}
+        names = m["names"]
+        labels = {}
+        # px.pie does not aggregate on its own: duplicate category rows
+        # become duplicate slices (and slice colors misalign once
+        # plotly.js merges them), so aggregate to one row per category.
+        if "values" in m:
+            plot_df = df.groupby(names, as_index=False, observed=True)[
+                m["values"]
+            ].sum()
+        else:
+            plot_df = df[names].value_counts().reset_index(name=_COUNT_COL)
+            m = {"names": names, "values": _COUNT_COL}
+            labels = {_COUNT_COL: "count"}
+        if len(plot_df) > config.MAX_CATEGORIES:
+            raise PlotError(
+                f"'{names}' has {len(plot_df)} categories - a pie with more "
+                f"than {config.MAX_CATEGORIES} slices is unreadable. Pick a "
+                "column with fewer categories."
+            )
         fig = px.pie(
             plot_df,
             **m,
+            labels=labels,
             hole=float(options.get("hole") or 0.0),
         )
         fig.update_traces(

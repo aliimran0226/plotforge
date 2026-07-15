@@ -18,6 +18,10 @@ from plotforge.plots.base import (
 )
 from plotforge.plots.registry import register_plot
 
+#: Internal name for the derived count column; guaranteed not to collide
+#: with a real column named 'count' (px shows it as 'count' via labels=).
+_COUNT_COL = "__plotforge_count__"
+
 
 @register_plot
 class BarPlot(BasePlot):
@@ -74,6 +78,7 @@ class BarPlot(BasePlot):
         group_cols = list(dict.fromkeys(group_cols))
 
         y = m.get("y")
+        labels = {}
         if y:
             aggfunc = options.get("aggfunc", "mean")
             try:
@@ -86,14 +91,17 @@ class BarPlot(BasePlot):
                 ) from exc
         else:
             # No value column: bar height = number of rows per category.
-            y = "count"
-            plot_df = df.groupby(group_cols, as_index=False, observed=True).size()
-            plot_df = plot_df.rename(columns={"size": y})
+            # An internal column name avoids colliding with real columns
+            # named 'count'/'size'; px shows it as 'count' via labels=.
+            y = _COUNT_COL
+            plot_df = df.groupby(group_cols, observed=True).size().reset_index(name=y)
+            labels = {y: "count"}
 
         fig = px.bar(
             plot_df,
             y=y,
             **{k: v for k, v in m.items() if k != "y"},
+            labels=labels,
             barmode=options.get("barmode", "group"),
         )
         return fig

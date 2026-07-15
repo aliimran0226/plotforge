@@ -102,4 +102,4 @@ EXPORT_FILENAME: str = "figure"
 # Data handling
 # --------------------------------------------------------------------------
 PREVIEW_ROWS: int = 15  # rows shown in the upload preview table
-MAX_CATEGORIES: int = 50  # columns with <= this many uniques count as categorical
+MAX_CATEGORIES: int = 50  # cap on discrete categories in one figure (e.g. pie slices)

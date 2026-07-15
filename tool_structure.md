@@ -64,6 +64,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-15 — Plots pre-aggregate what px won't
+`px.pie` never merges duplicate category rows (duplicate slices, and per-slice colors misalign once plotly.js merges labels client-side), so the pie plot aggregates to one row per category before building — sum for a mapped values column, row counts otherwise. Derived count columns (pie, bar) use an internal `__plotforge_count__` name displayed as "count" via `labels=`, so datasets with a real `count`/`size` column can't collide. `config.MAX_CATEGORIES` (previously unused) now caps pie slices with a friendly PlotError, and the density plot's `validate` refuses filled contours combined with color grouping (px forbids it; the fills would hide each other).
+
 ### 2026-07-15 — Palette slots keyed by px-assigned color, not trace name
 Recoloring by trace name turned *any* multi-trace grouping into color groups — a symbol-only scatter (all traces deliberately the same color, distinguished by marker shape) came out rainbow-colored. Palette slots are now keyed by the color px originally assigned, so traces px colored alike stay alike, while color-grouped traces still fan out across the palette. Manual per-group overrides remain keyed by trace name (that is what the pickers show). Same pass: transparent line colors are never overwritten (px hides strip-plot box skeletons with them), and axis-title overrides now rename every titled facet axis instead of only the first.
 
