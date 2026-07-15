@@ -16,6 +16,7 @@ import dash
 from dash import ALL, Input, Output, State, dcc, html
 
 from plotforge.data import store
+from plotforge.plots import overlay
 from plotforge.plots.base import PlotError, clean_mapping, merged_options
 from plotforge.plots.registry import all_plots, get_plot
 from plotforge.styling import style_model
@@ -75,6 +76,7 @@ def build_figure(
     mapping: dict,
     options: dict,
     style: style_model.StyleModel | None = None,
+    layers: list[dict] | None = None,
 ):
     """Pure figure-building path shared by render and export.
 
@@ -86,6 +88,8 @@ def build_figure(
     options = merged_options(plot_cls, options)
     plot_cls.validate(mapping, dataset.column_types, options)
     fig = plot_cls.build(dataset.df, mapping, options)
+    if layers:
+        overlay.add_layers(fig, dataset.df, dataset.column_types, mapping, layers)
     return apply_style(fig, style or style_model.StyleModel())
 
 
@@ -135,6 +139,8 @@ def register_callbacks(app: dash.Dash) -> None:
         Input({"type": "decor-line", "idx": ALL, "prop": ALL}, "value"),
         Input({"type": "decor-band", "idx": ALL, "prop": ALL}, "value"),
         Input({"type": "decor-annot", "idx": ALL, "prop": ALL}, "value"),
+        Input({"type": "layer-field", "layer": ALL, "field": ALL}, "value"),
+        Input({"type": "layer-map", "layer": ALL, "name": ALL}, "value"),
     )
     def render_figure(token, chart_type, *_pattern_values):
         """Rebuild the figure from the current control values."""
@@ -151,9 +157,12 @@ def register_callbacks(app: dash.Dash) -> None:
             raise dash.exceptions.PreventUpdate
 
         style = _style_from_pattern_lists(dash.ctx.inputs_list)
+        layers = overlay.layers_from_pattern(
+            dash.ctx.inputs_list[9], dash.ctx.inputs_list[10]
+        )
 
         try:
-            fig = build_figure(chart_type, dataset, mapping, options, style)
+            fig = build_figure(chart_type, dataset, mapping, options, style, layers)
         except PlotError as exc:
             return dash.no_update, str(exc), True
         except Exception as exc:  # never leak a traceback to the UI

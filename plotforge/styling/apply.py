@@ -310,6 +310,19 @@ def _current_color(trace) -> str | None:
     return None
 
 
+def _layer_tag(trace) -> str:
+    """Overlay-layer marker set by plots.overlay ('0' = base figure).
+
+    Every px figure starts at the same first palette color, so without
+    this tag a one-trace overlay would share its palette slot (and thus
+    its color) with the base chart's first group.
+    """
+    meta = trace.meta
+    if isinstance(meta, dict):
+        return str(meta.get("plotforge_layer", 0))
+    return "0"
+
+
 def _recolor_trace(trace, color: str) -> None:
     """Set every discrete-color property a trace type may use."""
     if hasattr(trace, "marker") and trace.marker is not None:
@@ -336,7 +349,7 @@ def _apply_colors(fig: go.Figure, style: StyleModel) -> None:
     # grouping - stay alike.
     seen: dict[str, int] = {}
     for name, trace in _iter_group_traces(fig):
-        key = (_current_color(trace) or f"\x00name:{name}").lower()
+        key = f"{_layer_tag(trace)}|{(_current_color(trace) or f'name:{name}').lower()}"
         if key not in seen:
             seen[key] = len(seen)
         color = palette[seen[key] % len(palette)]

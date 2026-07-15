@@ -58,6 +58,7 @@ Choose a chart type, then tell PlotForge which column goes where. Only the slots
 - **Color / group** — split the data into colored groups (one legend entry each)
 - **Facet rows / columns** — split into a grid of subplots
 - Chart-specific extras appear below (histogram bins, box notches, donut hole, error-bar columns, …)
+- **Overlay layers** — draw extra charts on the same axes (a trend line over a scatter, a line over bars, …), each with its own columns and an optional right-hand secondary Y axis. Not available together with facets.
 
 Columns that don't fit a slot's type are greyed out rather than hidden, so you can see why something isn't selectable.
 

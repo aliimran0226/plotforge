@@ -15,6 +15,7 @@ from dash import ALL, Input, Output, State, dcc
 
 from plotforge.callbacks.plot_callbacks import _style_from_pattern_lists, build_figure
 from plotforge.data import store
+from plotforge.plots import overlay
 from plotforge.plots.base import PlotError
 
 #: Characters allowed in a download filename; everything else becomes '_'.
@@ -58,6 +59,8 @@ def register_callbacks(app: dash.Dash) -> None:
         State({"type": "decor-line", "idx": ALL, "prop": ALL}, "value"),
         State({"type": "decor-band", "idx": ALL, "prop": ALL}, "value"),
         State({"type": "decor-annot", "idx": ALL, "prop": ALL}, "value"),
+        State({"type": "layer-field", "layer": ALL, "field": ALL}, "value"),
+        State({"type": "layer-map", "layer": ALL, "name": ALL}, "value"),
         State("export-width", "value"),
         State("export-height", "value"),
         State("export-scale", "value"),
@@ -80,12 +83,14 @@ def register_callbacks(app: dash.Dash) -> None:
 
         ctx = dash.ctx
         # states_list: 0 token, 1 chart type, 2 mapping, 3 options,
-        # 4-8 style/group/decoration patterns, 9-13 export settings.
+        # 4-8 style/group/decoration patterns, 9-10 layer patterns,
+        # 11-15 export settings.
         mapping = {i["id"]["name"]: i.get("value") for i in ctx.states_list[2]}
         options = {i["id"]["name"]: i.get("value") for i in ctx.states_list[3]}
         style = _style_from_pattern_lists(ctx.states_list)
+        layers = overlay.layers_from_pattern(ctx.states_list[9], ctx.states_list[10])
         width, height, scale, fmt, filename = (
-            ctx.states_list[i].get("value") for i in range(9, 14)
+            ctx.states_list[i].get("value") for i in range(11, 16)
         )
 
         fmt = fmt if fmt in EXPORT_FORMATS else "png"
@@ -97,7 +102,7 @@ def register_callbacks(app: dash.Dash) -> None:
         style.width, style.height = width, height
 
         try:
-            fig = build_figure(chart_type, dataset, mapping, options, style)
+            fig = build_figure(chart_type, dataset, mapping, options, style, layers)
             img = export_figure_bytes(fig, fmt, width, height, scale)
         except PlotError as exc:
             return dash.no_update, str(exc), True

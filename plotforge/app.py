@@ -14,6 +14,7 @@ import plotforge.plots  # noqa: F401  (imports register all chart types)
 from plotforge.callbacks import (
     data_callbacks,
     export_callbacks,
+    layer_callbacks,
     plot_callbacks,
     style_callbacks,
 )
@@ -33,6 +34,7 @@ def create_app() -> dash.Dash:
     app.layout = build_layout()
     data_callbacks.register_callbacks(app)
     plot_callbacks.register_callbacks(app)
+    layer_callbacks.register_callbacks(app)
     style_callbacks.register_callbacks(app)
     export_callbacks.register_callbacks(app)
     return app

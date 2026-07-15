@@ -31,6 +31,9 @@ def option_id(name: str) -> dict:
 
 def build_chart_controls() -> html.Div:
     """Static content of the Chart accordion section."""
+    # Local import: controls_layers needs _column_options from here.
+    from plotforge.ui.controls_layers import build_layer_section
+
     plots = all_plots()
     return html.Div(
         [
@@ -46,6 +49,7 @@ def build_chart_controls() -> html.Div:
             ),
             html.Div(id="mapping-controls"),
             html.Div(id="plot-options-controls"),
+            build_layer_section(),
         ]
     )
 

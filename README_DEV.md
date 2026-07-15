@@ -104,6 +104,10 @@ Widget types available: `number`, `text`, `color`, `checkbox`, `dropdown`, `slid
 
 **Variable-length style options** (reference lines, bands, annotations) don't fit the one-control-per-field scheme. They follow the dynamic-entry pattern instead: entry ids live in `decor-store`, cards are (re)built by `manage_decorations` via `controls_style.make_decoration_controls`, every card input carries `{"type": "decor-<kind>", "idx": …, "prop": …}`, and the collected entries reach StyleModel's list fields through `from_values(..., decorations=…)`. To add a property to an entry kind: extend the card builder in `controls_style.py` and read the new key in `apply.py:_apply_decorations`. To add a new kind: new add-button + card builder, a list in `decor-store`, a StyleModel list field (also register it in `_COLLECTION_FIELDS`), pattern Inputs/States in `render_figure`/`export_figure`, and an apply loop.
 
+### Making a chart type overlayable
+
+Overlay layers reuse registered plot classes directly. A cartesian chart type becomes layerable by adding its `name` to `OVERLAYABLE` in `plotforge/plots/overlay.py` — nothing else. Layers build with default options and never expose facet slots (`layer_mapping_specs` strips them). If the chart needs special merge handling (extra layout, trace tweaks), extend `overlay._merge`.
+
 ### Adding a new file format to the loader
 
 Everything lives in `plotforge/data/loader.py`:
@@ -125,9 +129,10 @@ Everything lives in `plotforge/data/loader.py`:
 | `handle_upload` | `callbacks/data_callbacks.py` | `data-upload.contents` | dataset token, summary, preview, sheet picker, data error, `data-upload.contents` (reset to `None` so the same file can be re-uploaded) |
 | `handle_sheet_switch` | `callbacks/data_callbacks.py` | `sheet-picker.value` (re-parses from the cached `Dataset.raw`) | same as upload minus the contents reset (duplicate outputs) |
 | `rebuild_mapping_ui` | `callbacks/plot_callbacks.py` | `chart-type.value`, `dataset-token.data` | `mapping-controls`, `plot-options-controls` |
-| `render_figure` | `callbacks/plot_callbacks.py` | token, chart type, all `{"type":"mapping"}`, `{"type":"plot-opt"}`, `{"type":"style"}`, `{"type":"group-color"}`, `{"type":"decor-*"}` values | `figure-container`, `plot-error` |
+| `render_figure` | `callbacks/plot_callbacks.py` | token, chart type, all `{"type":"mapping"}`, `{"type":"plot-opt"}`, `{"type":"style"}`, `{"type":"group-color"}`, `{"type":"decor-*"}`, `{"type":"layer-*"}` values | `figure-container`, `plot-error` |
 | `rebuild_group_pickers` | `callbacks/style_callbacks.py` | token, all mapping values | `group-color-controls` |
 | `manage_decorations` | `callbacks/style_callbacks.py` | add-decor buttons, all `{"type":"decor-del-*"}` clicks | `decor-store`, `decor-controls` (cards rebuilt, typed values preserved from States) |
+| `manage_layers` | `callbacks/layer_callbacks.py` | `add-layer`, `{"type":"layer-del"}` clicks, layer chart dropdowns, dataset token | `layers-store`, `layer-controls` (fingerprint in the store guards against the rebuild echo) |
 | `reset_style` | `callbacks/style_callbacks.py` | `reset-style.n_clicks` | every `{"type":"style"}` control value and every `{"type":"group-color"}` picker (reseeded from the default palette) |
 | `export_figure` | `callbacks/export_callbacks.py` | `export-button.n_clicks` (everything else as State) | `export-download.data`, `export-error` |
 
