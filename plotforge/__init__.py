@@ -6,4 +6,4 @@ high-resolution PNG/JPG or vector SVG/PDF figures - or compose saved
 figures into a labeled multi-panel grid.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
