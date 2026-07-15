@@ -19,22 +19,42 @@ from plotforge.ui.controls_mapping import build_chart_controls
 from plotforge.ui.controls_style import build_style_controls
 
 
+def _section_title(icon: str, text: str) -> html.Span:
+    """Accordion section title with a Bootstrap icon."""
+    return html.Span(
+        [html.I(className=f"bi bi-{icon} me-2 text-primary"), text],
+        className="fw-semibold",
+    )
+
+
 def build_layout() -> dbc.Container:
     """Return the full page layout for the Dash app."""
     sidebar = dbc.Accordion(
         [
-            dbc.AccordionItem(build_data_controls(), title="1. Data", item_id="data"),
             dbc.AccordionItem(
-                build_chart_controls(), title="2. Chart", item_id="chart"
+                build_data_controls(),
+                title=_section_title("table", "1. Data"),
+                item_id="data",
             ),
             dbc.AccordionItem(
-                build_style_controls(), title="3. Style", item_id="style"
+                build_chart_controls(),
+                title=_section_title("bar-chart-line", "2. Chart"),
+                item_id="chart",
             ),
             dbc.AccordionItem(
-                build_export_controls(), title="4. Export", item_id="export"
+                build_style_controls(),
+                title=_section_title("palette", "3. Style"),
+                item_id="style",
             ),
             dbc.AccordionItem(
-                build_compose_controls(), title="5. Compose", item_id="compose"
+                build_export_controls(),
+                title=_section_title("download", "4. Export"),
+                item_id="export",
+            ),
+            dbc.AccordionItem(
+                build_compose_controls(),
+                title=_section_title("grid-3x3-gap", "5. Compose"),
+                item_id="compose",
             ),
         ],
         active_item="data",
@@ -70,16 +90,32 @@ def build_layout() -> dbc.Container:
     header = dbc.Navbar(
         dbc.Container(
             [
-                dbc.NavbarBrand("PlotForge", className="fw-bold"),
-                html.Span(
-                    f"v{__version__} - publication-ready figure playground",
-                    className="navbar-text text-muted small",
+                html.Div(
+                    [
+                        html.I(className="bi bi-graph-up-arrow me-2 fs-4 text-primary"),
+                        dbc.NavbarBrand("PlotForge", className="fw-bold mb-0"),
+                        html.Span(
+                            f"v{__version__} · publication-ready figures",
+                            className="navbar-text text-muted small ms-2 "
+                            "d-none d-md-inline",
+                        ),
+                    ],
+                    className="d-flex align-items-center",
+                ),
+                html.Div(
+                    [
+                        html.I(className="bi bi-sun me-1 text-muted small"),
+                        dbc.Switch(id="theme-switch", value=False, className="mb-0"),
+                        html.I(className="bi bi-moon-stars text-muted small"),
+                        html.Span(id="theme-dummy", className="d-none"),
+                    ],
+                    className="d-flex align-items-center",
+                    title="Dark mode (app only - figures keep their template)",
                 ),
             ],
             fluid=True,
         ),
-        color="light",
-        className="mb-3 border-bottom",
+        className="mb-3 border-bottom bg-body-tertiary pf-header",
     )
 
     return dbc.Container(
@@ -87,8 +123,8 @@ def build_layout() -> dbc.Container:
             header,
             dbc.Row(
                 [
-                    dbc.Col(sidebar, width=12, lg=4, xl=3, className="mb-3"),
-                    dbc.Col(figure_area, width=12, lg=8, xl=9),
+                    dbc.Col(sidebar, width=12, lg=4, xl=3, className="mb-3 pf-sidebar"),
+                    dbc.Col(figure_area, width=12, lg=8, xl=9, className="pf-figure"),
                 ],
             ),
         ],

@@ -30,7 +30,10 @@ def build_compose_controls() -> html.Div:
                 className="text-muted d-block mb-2",
             ),
             dbc.Button(
-                "Save current figure as panel",
+                [
+                    html.I(className="bi bi-plus-square me-1"),
+                    "Save current figure as panel",
+                ],
                 id="save-panel",
                 color="secondary",
                 outline=True,
@@ -132,7 +135,7 @@ def build_compose_controls() -> html.Div:
                 [
                     dbc.Col(
                         dbc.Button(
-                            "Preview",
+                            [html.I(className="bi bi-eye me-1"), "Preview"],
                             id="compose-preview",
                             color="secondary",
                             outline=True,
@@ -142,7 +145,7 @@ def build_compose_controls() -> html.Div:
                     ),
                     dbc.Col(
                         dbc.Button(
-                            "Export grid",
+                            [html.I(className="bi bi-download me-1"), "Export grid"],
                             id="compose-export",
                             color="primary",
                             size="sm",

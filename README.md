@@ -2,7 +2,7 @@
 
 **A local playground for building publication-ready figures — no coding required.**
 
-PlotForge runs on your own computer and opens in your browser. Upload a CSV, TSV, or Excel file, pick a chart type, map your columns, fine-tune every visual detail live, and export a high-resolution PNG/JPG or vector SVG/PDF ready for a paper, poster, or slide deck.
+PlotForge runs on your own computer and opens in your browser. No file handy? **Load example data** gives you a demo dataset in one click; a header switch toggles a dark app theme (figures keep their own template). Upload a CSV, TSV, or Excel file, pick a chart type, map your columns, fine-tune every visual detail live, and export a high-resolution PNG/JPG or vector SVG/PDF ready for a paper, poster, or slide deck.
 
 - 13 chart types: scatter, line, bar, histogram, box, violin, strip/jitter, heatmap, 2D density, ECDF, area, pie, and error-bar plots
 - Deep styling: sizes, fonts, titles, per-axis ranges/log/ticks/grids, color palettes (including colorblind-safe), per-group colors, legend placement, templates
@@ -68,7 +68,7 @@ Columns that don't fit a slot's type are greyed out rather than hidden, so you c
 
 Seven collapsible groups of controls, all live:
 
-- **Figure** — width/height, template (overall look), backgrounds, margins, border around the whole figure, axis line width
+- **Figure** — width (empty = fit the window) and height, template (overall look), backgrounds, margins, border around the whole figure, axis line width
 - **Titles & Fonts** — figure title (text/size/color/alignment), global font, axis-title size
 - **X Axis / Y Axis** — title, fixed range (either bound may stay automatic), log scale, reversed, tick size/angle/format, tick marks (outside/inside, length, width), gridlines, zero line, axis line and mirrored "box" frame
 - **Colors & Groups** — qualitative palette (try *Safe* for colorblind-friendly figures), continuous colorscale, opacity, and manual per-group color pickers

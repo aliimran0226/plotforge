@@ -26,7 +26,7 @@ class StyleModel:
     """All style options. Empty strings / None mean 'automatic'."""
 
     # --- Figure -----------------------------------------------------------
-    width: int = config.FIGURE_WIDTH
+    width: int | None = None  # None = fit the window width
     height: int = config.FIGURE_HEIGHT
     template: str = config.TEMPLATE
     paper_bgcolor: str = config.PAPER_BGCOLOR

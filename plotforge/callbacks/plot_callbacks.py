@@ -27,6 +27,7 @@ from plotforge.ui import controls_mapping
 #: to the Export section (which does proper high-DPI export).
 GRAPH_CONFIG = {
     "displaylogo": False,
+    "responsive": True,  # auto-width figures follow the window size
     "toImageButtonOptions": {"format": "png", "filename": "plotforge_figure"},
 }
 

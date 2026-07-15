@@ -128,6 +128,9 @@ Everything lives in `plotforge/data/loader.py`:
 |---|---|---|---|
 | `handle_upload` | `callbacks/data_callbacks.py` | `data-upload.contents` | dataset token, summary, preview, sheet picker, data error, `data-upload.contents` (reset to `None` so the same file can be re-uploaded) |
 | `handle_sheet_switch` | `callbacks/data_callbacks.py` | `sheet-picker.value` (re-parses from the cached `Dataset.raw`) | same as upload minus the contents reset (duplicate outputs) |
+| `load_sample` | `callbacks/data_callbacks.py` | `load-sample.n_clicks` | same as upload (built-in demo frame via `data/sample.py`) |
+| `legend_orientation_follows_position` | `callbacks/style_callbacks.py` | legend position dropdown | legend orientation control (preselects horizontal for "Below") |
+| *(clientside)* theme toggle | `app.py` | `theme-switch.value` | sets `data-bs-theme` on `<html>` |
 | `rebuild_mapping_ui` | `callbacks/plot_callbacks.py` | `chart-type.value`, `dataset-token.data` | `mapping-controls`, `plot-options-controls` |
 | `render_figure` | `callbacks/plot_callbacks.py` | token, chart type, all `{"type":"mapping"}`, `{"type":"plot-opt"}`, `{"type":"style"}`, `{"type":"group-color"}`, `{"type":"decor-*"}`, `{"type":"layer-*"}` values | `figure-container`, `plot-error` |
 | `rebuild_group_pickers` | `callbacks/style_callbacks.py` | token, all mapping values | `group-color-controls` |

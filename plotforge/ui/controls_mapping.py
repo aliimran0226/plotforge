@@ -15,8 +15,12 @@ from dash import dcc, html
 from plotforge.plots.base import BasePlot, OptionSpec
 from plotforge.plots.registry import all_plots
 
-#: Badge shown next to a column name in mapping dropdowns.
-_KIND_BADGE = {"numeric": "#", "categorical": "abc", "datetime": "date"}
+#: Badge text and CSS class per column kind (see assets/custom.css).
+_KIND_BADGE = {
+    "numeric": ("123", "pf-badge-num"),
+    "categorical": ("abc", "pf-badge-cat"),
+    "datetime": ("date", "pf-badge-date"),
+}
 
 
 def mapping_id(name: str) -> dict:
@@ -65,11 +69,15 @@ def _column_options(
     options = []
     for col in columns:
         kind = column_types.get(col, "categorical")
-        badge = _KIND_BADGE.get(kind, "?")
+        text, css = _KIND_BADGE.get(kind, ("?", "pf-badge-cat"))
         options.append(
             {
-                "label": f"{col}  ({badge})",
+                "label": html.Span(
+                    [col, html.Span(text, className=f"pf-badge {css} ms-2")],
+                    className="d-inline-flex align-items-center",
+                ),
                 "value": col,
+                "search": col,  # component labels need an explicit search key
                 "disabled": kind not in kinds,
             }
         )

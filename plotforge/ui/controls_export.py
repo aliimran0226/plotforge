@@ -84,7 +84,7 @@ def build_export_controls() -> html.Div:
                 className="mb-3",
             ),
             dbc.Button(
-                "Export figure",
+                [html.I(className="bi bi-download me-1"), "Export figure"],
                 id="export-button",
                 color="primary",
                 className="w-100",

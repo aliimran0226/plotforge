@@ -215,7 +215,9 @@ def test_entries_by_index_groups_props():
 
 
 def test_outer_border_shape(grouped_fig):
-    style = style_model.StyleModel(outer_border_on=True, outer_border_color="#222222")
+    style = style_model.StyleModel(
+        width=800, height=550, outer_border_on=True, outer_border_color="#222222"
+    )
     fig = apply_style(grouped_fig, style)
     rects = [s for s in fig.layout.shapes if s.type == "rect" and s.xref == "paper"]
     assert len(rects) == 1
@@ -229,6 +231,12 @@ def test_outer_border_shape(grouped_fig):
 def test_no_border_by_default(grouped_fig):
     fig = apply_style(grouped_fig, style_model.StyleModel())
     assert not [s for s in fig.layout.shapes if s.type == "rect"]
+
+
+def test_auto_width_leaves_figure_responsive(grouped_fig):
+    fig = apply_style(grouped_fig, style_model.StyleModel())  # width=None
+    assert fig.layout.width is None
+    assert fig.layout.autosize is True
 
 
 def test_tick_marks_and_line_width(grouped_fig):

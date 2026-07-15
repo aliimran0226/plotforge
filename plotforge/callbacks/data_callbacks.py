@@ -9,7 +9,7 @@ from __future__ import annotations
 import dash
 from dash import Input, Output, State
 
-from plotforge.data import loader, store
+from plotforge.data import loader, sample, store
 from plotforge.ui import controls_data
 
 #: Number of outputs shared by the two callbacks below (see _outputs()).
@@ -62,6 +62,11 @@ def _ingest(raw: bytes, filename: str, sheet: str | None, token: str | None) -> 
         active_sheet=active_sheet,
         column_types=types,
     )
+    return _register(dataset, token)
+
+
+def _register(dataset: store.Dataset, token: str | None) -> tuple:
+    """Cache a ready Dataset and build the shared output tuple."""
     # Reuse the token on sheet switches so downstream state stays valid.
     if token and store.get(token):
         store.update(token, dataset)
@@ -69,10 +74,11 @@ def _ingest(raw: bytes, filename: str, sheet: str | None, token: str | None) -> 
     else:
         new_token = store.put(dataset)
 
+    df, sheets = dataset.df, dataset.sheets
     summary = controls_data.make_summary(
-        filename, df.shape[0], df.shape[1], active_sheet
+        dataset.filename, df.shape[0], df.shape[1], dataset.active_sheet
     )
-    preview = controls_data.make_preview_table(df, types)
+    preview = controls_data.make_preview_table(df, dataset.column_types)
     show_picker = bool(sheets and len(sheets) > 1)
     sheet_options = [{"label": s, "value": s} for s in (sheets or [])]
     picker_style = {"display": "block"} if show_picker else {"display": "none"}
@@ -82,7 +88,7 @@ def _ingest(raw: bytes, filename: str, sheet: str | None, token: str | None) -> 
         summary,
         preview,
         sheet_options,
-        active_sheet,
+        dataset.active_sheet,
         picker_style,
         "",
         False,
@@ -111,6 +117,28 @@ def register_callbacks(app: dash.Dash) -> None:
             return _ingest(raw, filename, sheet=None, token=None) + (None,)
         except loader.LoaderError as exc:
             return _error_tuple(str(exc)) + (None,)
+
+    @app.callback(
+        _outputs(duplicate=True),
+        Input("load-sample", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def load_sample(n_clicks):
+        """Load the built-in demo dataset (no file needed)."""
+        if not n_clicks:
+            raise dash.exceptions.PreventUpdate
+        df = sample.sample_dataframe()
+        types = loader.infer_column_types(df)
+        df = loader.coerce_datetime_columns(df, types)
+        dataset = store.Dataset(
+            filename=sample.SAMPLE_FILENAME,
+            raw=b"",
+            df=df,
+            sheets=None,
+            active_sheet=None,
+            column_types=types,
+        )
+        return _register(dataset, token=None)
 
     @app.callback(
         _outputs(duplicate=True),

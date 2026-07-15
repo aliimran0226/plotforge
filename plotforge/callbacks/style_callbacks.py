@@ -81,6 +81,22 @@ def register_callbacks(app: dash.Dash) -> None:
         ]
         return style_values, group_values
 
+    @app.callback(
+        Output(
+            {"type": "style", "field": "legend_orientation"},
+            "value",
+            allow_duplicate=True,
+        ),
+        Input({"type": "style", "field": "legend_position"}, "value"),
+        State({"type": "style", "field": "legend_orientation"}, "value"),
+        prevent_initial_call=True,
+    )
+    def legend_orientation_follows_position(position, orientation):
+        """'Below' almost always wants a horizontal legend - preselect it."""
+        if position == "below" and orientation != "h":
+            return "h"
+        raise dash.exceptions.PreventUpdate
+
     #: Add-button id -> (entry kind, seed values for the new card).
     _ADDERS = {
         "add-decor-hline": ("line", {"orient": "h"}),

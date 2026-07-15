@@ -42,9 +42,20 @@ def build_data_controls() -> html.Div:
         className="mb-2",
     )
 
+    sample_button = dbc.Button(
+        [html.I(className="bi bi-stars me-1"), "Load example data"],
+        id="load-sample",
+        color="secondary",
+        outline=True,
+        size="sm",
+        className="w-100 mb-2",
+        title="A small built-in dose-response dataset to explore the tool",
+    )
+
     return html.Div(
         [
             upload,
+            sample_button,
             dbc.Alert(
                 id="data-error",
                 color="danger",

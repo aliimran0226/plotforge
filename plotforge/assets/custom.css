@@ -1,0 +1,132 @@
+/* PlotForge app chrome. Figures get their look from plotly templates;
+   everything here styles only the tool around them. Dark mode works via
+   Bootstrap 5.3 color modes: the header switch sets data-bs-theme on
+   <html> (see app.py). */
+
+/* ---- layout ----------------------------------------------------------- */
+
+/* Sidebar scrolls on its own on large screens; the figure stays put. */
+@media (min-width: 992px) {
+    .pf-sidebar {
+        max-height: calc(100vh - 90px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    .pf-figure > .card {
+        position: sticky;
+        top: 0.25rem;
+    }
+}
+
+.pf-header {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
+
+/* ---- accordion / controls --------------------------------------------- */
+
+.accordion-button {
+    padding: 0.6rem 0.9rem;
+}
+
+.accordion-body {
+    padding: 0.75rem 0.9rem;
+}
+
+/* Nested accordions (the Style section) get tighter headers. */
+.accordion .accordion .accordion-button {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.form-label.small {
+    margin-top: 0.15rem;
+    color: var(--bs-secondary-color);
+}
+
+/* Upload dropzone: subtle hover invitation. */
+#data-upload {
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    border-color: var(--bs-border-color) !important;
+}
+
+#data-upload:hover {
+    border-color: var(--bs-primary) !important;
+    background-color: var(--bs-primary-bg-subtle);
+}
+
+/* ---- column-type badges ------------------------------------------------ */
+
+.pf-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.4rem;
+    letter-spacing: 0.02em;
+}
+
+.pf-badge-num {
+    color: #0d5c9e;
+    background: #d7e9fa;
+}
+
+.pf-badge-cat {
+    color: #1a7040;
+    background: #d8f2e3;
+}
+
+.pf-badge-date {
+    color: #6f42c1;
+    background: #e9defa;
+}
+
+[data-bs-theme="dark"] .pf-badge-num {
+    color: #8ec7f5;
+    background: #123a5c;
+}
+
+[data-bs-theme="dark"] .pf-badge-cat {
+    color: #86dcae;
+    background: #12452a;
+}
+
+[data-bs-theme="dark"] .pf-badge-date {
+    color: #cdb2f2;
+    background: #3b2a5c;
+}
+
+/* ---- dark mode for third-party widgets --------------------------------- */
+
+/* dcc.Dropdown (react-select) has hardcoded light colors. */
+[data-bs-theme="dark"] .Select-control,
+[data-bs-theme="dark"] .Select-menu-outer,
+[data-bs-theme="dark"] .Select input > input {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color) !important;
+}
+
+[data-bs-theme="dark"] .Select-value-label,
+[data-bs-theme="dark"] .Select-placeholder,
+[data-bs-theme="dark"] .Select-option {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+}
+
+[data-bs-theme="dark"] .Select-option.is-focused {
+    background-color: var(--bs-tertiary-bg) !important;
+}
+
+[data-bs-theme="dark"] .Select-option.is-disabled {
+    color: var(--bs-secondary-color) !important;
+    opacity: 0.55;
+}
+
+/* Data preview table (dash_table sets inline light colors). */
+[data-bs-theme="dark"] .dash-spreadsheet-container .dash-spreadsheet-inner td,
+[data-bs-theme="dark"] .dash-spreadsheet-container .dash-spreadsheet-inner th {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
+    border-color: var(--bs-border-color) !important;
+}

@@ -60,13 +60,18 @@ def apply_style(fig: go.Figure, style: StyleModel) -> go.Figure:
     fig.update_layout(template=style.template)
 
     fig.update_layout(
-        width=style.width,
         height=style.height,
         margin=dict(
             l=style.margin_l, r=style.margin_r, t=style.margin_t, b=style.margin_b
         ),
         font_family=style.font_family,
     )
+    # Empty width = fit the window (dcc.Graph is responsive); export
+    # and compose always set a concrete width before applying.
+    if style.width:
+        fig.update_layout(width=style.width)
+    else:
+        fig.update_layout(autosize=True)
     # Background colors: only when moved off the default (see module doc).
     if style.paper_bgcolor.lower() != _DEFAULTS.paper_bgcolor:
         fig.update_layout(paper_bgcolor=style.paper_bgcolor)

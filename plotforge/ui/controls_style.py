@@ -98,7 +98,12 @@ _SECTIONS: list[tuple[str, list[tuple]]] = [
     (
         "Figure",
         [
-            ("width", "Width (px)", "number", {"min": 200, "max": 4000}),
+            (
+                "width",
+                "Width (px, empty = fit window)",
+                "number",
+                {"min": 200, "max": 4000},
+            ),
             ("height", "Height (px)", "number", {"min": 200, "max": 4000}),
             ("template", "Template", "dropdown", {"choices": config.TEMPLATES}),
             ("paper_bgcolor", "Background (paper)", "color", {}),
@@ -305,7 +310,10 @@ def build_style_controls() -> html.Div:
     return html.Div(
         [
             dbc.Button(
-                "Reset style to defaults",
+                [
+                    html.I(className="bi bi-arrow-counterclockwise me-1"),
+                    "Reset style to defaults",
+                ],
                 id="reset-style",
                 color="secondary",
                 outline=True,

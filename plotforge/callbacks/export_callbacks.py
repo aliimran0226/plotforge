@@ -13,6 +13,7 @@ import re
 import dash
 from dash import ALL, Input, Output, State, dcc
 
+from plotforge import config
 from plotforge.callbacks.plot_callbacks import _style_from_pattern_lists
 from plotforge.data import store
 from plotforge.figure import build_figure
@@ -95,7 +96,9 @@ def register_callbacks(app: dash.Dash) -> None:
         )
 
         fmt = fmt if fmt in EXPORT_FORMATS else "png"
-        width = int(width or style.width)
+        # style.width may be None (fit-window figures) - fall back to
+        # the config default for the export size.
+        width = int(width or style.width or config.FIGURE_WIDTH)
         height = int(height or style.height)
         scale = min(max(int(scale or 1), 1), 5)
         # Bake the export size into the style so size-dependent styling
