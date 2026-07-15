@@ -64,6 +64,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-15 — Palette slots keyed by px-assigned color, not trace name
+Recoloring by trace name turned *any* multi-trace grouping into color groups — a symbol-only scatter (all traces deliberately the same color, distinguished by marker shape) came out rainbow-colored. Palette slots are now keyed by the color px originally assigned, so traces px colored alike stay alike, while color-grouped traces still fan out across the palette. Manual per-group overrides remain keyed by trace name (that is what the pickers show). Same pass: transparent line colors are never overwritten (px hides strip-plot box skeletons with them), and axis-title overrides now rename every titled facet axis instead of only the first.
+
 ### 2026-07-15 — Loader sniffs delimiters from a whitelist
 `pd.read_csv(sep=None)` sniffs over *any* character and corrupted single-column files (it happily picked a letter from the header as the delimiter). The loader now sniffs with `csv.Sniffer` restricted to `, ; \t |` and falls back to a comma, which is harmless for single-column files. Trade-off: exotic delimiters (spaces, `:`) are no longer auto-detected — none were reliably detected before either.
 

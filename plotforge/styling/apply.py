@@ -146,9 +146,14 @@ def _apply_axis(fig: go.Figure, style: StyleModel, which: str) -> None:
     updater(**kwargs)
 
     if s["title"]:
-        # Rename only the primary axis title; facet copies stay linked.
-        axis = fig.layout.xaxis if which == "x" else fig.layout.yaxis
-        axis.title.text = s["title"]
+        # Rename every axis that px gave a title (facets title the outer
+        # axes only); fall back to the primary axis for bare figures.
+        select = fig.select_xaxes if which == "x" else fig.select_yaxes
+        titled = [axis for axis in select() if axis.title.text]
+        if not titled:
+            titled = [fig.layout.xaxis if which == "x" else fig.layout.yaxis]
+        for axis in titled:
+            axis.title.text = s["title"]
 
 
 def _iter_group_traces(fig: go.Figure):
@@ -166,13 +171,33 @@ def _iter_group_traces(fig: go.Figure):
         yield (trace.name or "", trace)
 
 
+def _is_transparent(color: object) -> bool:
+    """True for rgba colors with zero alpha (px uses them to hide parts)."""
+    if not isinstance(color, str):
+        return False
+    c = color.replace(" ", "").lower()
+    return c.startswith("rgba(") and c.endswith(",0)")
+
+
+def _current_color(trace) -> str | None:
+    """The discrete color px assigned to a trace (marker first, then line)."""
+    for attr in ("marker", "line"):
+        color = getattr(getattr(trace, attr, None), "color", None)
+        if isinstance(color, str) and not _is_transparent(color):
+            return color
+    return None
+
+
 def _recolor_trace(trace, color: str) -> None:
     """Set every discrete-color property a trace type may use."""
     if hasattr(trace, "marker") and trace.marker is not None:
         trace.marker.color = color
     if hasattr(trace, "line") and trace.line is not None:
         # Box/violin use 'line' for their outline; scatter for the line.
-        trace.line.color = color
+        # A transparent line is deliberate (px hides strip-plot boxes
+        # this way) - leave it hidden.
+        if not _is_transparent(trace.line.color):
+            trace.line.color = color
     if trace.type in ("scatter", "scattergl") and trace.fill:
         trace.fillcolor = None  # let plotly derive it from the new color
 
@@ -183,13 +208,16 @@ def _apply_colors(fig: go.Figure, style: StyleModel) -> None:
     fig.update_layout(colorway=palette)
 
     # plotly.express bakes concrete colors into traces, so setting the
-    # colorway is not enough: reassign trace colors from the palette in
-    # first-appearance order of the legend groups.
+    # colorway is not enough: reassign trace colors from the palette.
+    # Palette slots are keyed by the color px assigned (not the trace
+    # name), so traces px deliberately colored alike - e.g. symbol-only
+    # grouping - stay alike.
     seen: dict[str, int] = {}
     for name, trace in _iter_group_traces(fig):
-        if name not in seen:
-            seen[name] = len(seen)
-        color = palette[seen[name] % len(palette)]
+        key = (_current_color(trace) or f"\x00name:{name}").lower()
+        if key not in seen:
+            seen[key] = len(seen)
+        color = palette[seen[key] % len(palette)]
         if style.group_colors_on and name in style.group_colors:
             color = style.group_colors[name]
         _recolor_trace(trace, color)

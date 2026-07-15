@@ -116,6 +116,31 @@ def test_apply_opacity(grouped_fig):
     assert all(t.opacity == 0.4 for t in fig.data)
 
 
+def test_recolor_preserves_symbol_only_grouping(sample_df):
+    # Symbol grouping without color: px gives every trace the same color;
+    # recoloring must not turn symbol groups into color groups.
+    fig = px.scatter(sample_df, x="dose", y="response", symbol="group")
+    apply_style(fig, style_model.StyleModel())
+    assert len({t.marker.color for t in fig.data}) == 1
+
+
+def test_recolor_keeps_strip_boxes_hidden(sample_df):
+    # px.strip hides its underlying box via a transparent line color;
+    # recoloring must not paint the box outline back in.
+    fig = px.strip(sample_df, x="group", y="response", color="group")
+    apply_style(fig, style_model.StyleModel())
+    for trace in fig.data:
+        assert trace.line.color == "rgba(255,255,255,0)"
+        assert trace.marker.color != "rgba(255,255,255,0)"
+
+
+def test_axis_title_override_hits_all_facets(sample_df):
+    fig = px.scatter(sample_df, x="dose", y="response", facet_col="group")
+    apply_style(fig, style_model.StyleModel(x_title="Dose (mg)"))
+    titles = [axis.title.text for axis in fig.select_xaxes() if axis.title.text]
+    assert titles and all(t == "Dose (mg)" for t in titles)
+
+
 def test_apply_representative_everything(grouped_fig):
     """One pass with most options set - must not raise."""
     style = style_model.StyleModel(
