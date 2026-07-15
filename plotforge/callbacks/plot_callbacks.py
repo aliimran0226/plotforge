@@ -35,6 +35,33 @@ def _values_by_name(pattern_list: list[dict]) -> dict[str, object]:
     return {item["id"]["name"]: item.get("value") for item in pattern_list}
 
 
+def _entry_list(pattern_list: list[dict]) -> list[dict]:
+    """Decoration pattern entries -> ordered list of {prop: value} dicts."""
+    grouped = style_model.entries_by_index(pattern_list)
+    return [grouped[i] for i in sorted(grouped)]
+
+
+def _style_from_pattern_lists(pattern_lists: list) -> style_model.StyleModel:
+    """Build the StyleModel from ctx inputs/states lists.
+
+    Render and export declare their pattern dependencies in the same
+    order, so indices 4-8 are: style fields, group colors, reference
+    lines, bands, annotations.
+    """
+    style_values = {item["id"]["field"]: item.get("value") for item in pattern_lists[4]}
+    group_colors = {
+        item["id"]["group"]: item.get("value")
+        for item in pattern_lists[5]
+        if item.get("value")
+    }
+    decorations = {
+        "ref_lines": _entry_list(pattern_lists[6]),
+        "ref_bands": _entry_list(pattern_lists[7]),
+        "annotations": _entry_list(pattern_lists[8]),
+    }
+    return style_model.from_values(style_values, group_colors, decorations)
+
+
 def _no_data_placeholder() -> html.P:
     return html.P(
         "Upload a data file to get started.",
@@ -105,10 +132,11 @@ def register_callbacks(app: dash.Dash) -> None:
         Input({"type": "plot-opt", "name": ALL}, "value"),
         Input({"type": "style", "field": ALL}, "value"),
         Input({"type": "group-color", "group": ALL}, "value"),
+        Input({"type": "decor-line", "idx": ALL, "prop": ALL}, "value"),
+        Input({"type": "decor-band", "idx": ALL, "prop": ALL}, "value"),
+        Input({"type": "decor-annot", "idx": ALL, "prop": ALL}, "value"),
     )
-    def render_figure(
-        token, chart_type, _mapping_values, _option_values, _style_values, _group_colors
-    ):
+    def render_figure(token, chart_type, *_pattern_values):
         """Rebuild the figure from the current control values."""
         dataset = store.get(token)
         if dataset is None or not chart_type or chart_type not in all_plots():
@@ -122,15 +150,7 @@ def register_callbacks(app: dash.Dash) -> None:
         if not mapping:
             raise dash.exceptions.PreventUpdate
 
-        style_values = {
-            item["id"]["field"]: item.get("value") for item in dash.ctx.inputs_list[4]
-        }
-        group_colors = {
-            item["id"]["group"]: item.get("value")
-            for item in dash.ctx.inputs_list[5]
-            if item.get("value")
-        }
-        style = style_model.from_values(style_values, group_colors)
+        style = _style_from_pattern_lists(dash.ctx.inputs_list)
 
         try:
             fig = build_figure(chart_type, dataset, mapping, options, style)

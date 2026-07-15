@@ -12,7 +12,7 @@ from dash import ALL, Input, Output, State, ctx
 
 from plotforge.data import store
 from plotforge.styling.apply import palette_colors
-from plotforge.styling.style_model import defaults_by_field
+from plotforge.styling.style_model import defaults_by_field, entries_by_index
 from plotforge.ui import controls_style
 
 #: Mapping slots that define legend groups, in priority order. 'names'
@@ -80,3 +80,63 @@ def register_callbacks(app: dash.Dash) -> None:
             for i in range(len(ctx.outputs_list[1]))
         ]
         return style_values, group_values
+
+    #: Add-button id -> (entry kind, seed values for the new card).
+    _ADDERS = {
+        "add-decor-hline": ("line", {"orient": "h"}),
+        "add-decor-vline": ("line", {"orient": "v"}),
+        "add-decor-band": ("band", {}),
+        "add-decor-annot": ("annot", {}),
+    }
+
+    @app.callback(
+        Output("decor-store", "data"),
+        Output("decor-controls", "children"),
+        Input("add-decor-hline", "n_clicks"),
+        Input("add-decor-vline", "n_clicks"),
+        Input("add-decor-band", "n_clicks"),
+        Input("add-decor-annot", "n_clicks"),
+        Input({"type": "decor-del-line", "idx": ALL}, "n_clicks"),
+        Input({"type": "decor-del-band", "idx": ALL}, "n_clicks"),
+        Input({"type": "decor-del-annot", "idx": ALL}, "n_clicks"),
+        State("decor-store", "data"),
+        State({"type": "decor-line", "idx": ALL, "prop": ALL}, "value"),
+        State({"type": "decor-band", "idx": ALL, "prop": ALL}, "value"),
+        State({"type": "decor-annot", "idx": ALL, "prop": ALL}, "value"),
+        prevent_initial_call=True,
+    )
+    def manage_decorations(*_args):
+        """Add/remove reference-line, band, and annotation cards."""
+        trigger = ctx.triggered_id
+        # Newly created remove buttons fire this callback with
+        # n_clicks=None; only act on real clicks.
+        if trigger is None or not ctx.triggered[0]["value"]:
+            raise dash.exceptions.PreventUpdate
+
+        data = ctx.states_list[0]["value"] or {}
+        decor = {
+            "line": list(data.get("line", [])),
+            "band": list(data.get("band", [])),
+            "annot": list(data.get("annot", [])),
+            "next": int(data.get("next", 0)),
+        }
+        # Current card values, so regenerating the list keeps user input.
+        current = {
+            "line": entries_by_index(ctx.states_list[1]),
+            "band": entries_by_index(ctx.states_list[2]),
+            "annot": entries_by_index(ctx.states_list[3]),
+        }
+
+        if trigger in _ADDERS:
+            kind, seed = _ADDERS[trigger]
+            idx = decor["next"]
+            decor[kind].append(idx)
+            decor["next"] = idx + 1
+            current[kind][idx] = dict(seed)
+        elif isinstance(trigger, dict):  # a remove button
+            kind = trigger["type"].removeprefix("decor-del-")
+            if trigger["idx"] in decor.get(kind, []):
+                decor[kind].remove(trigger["idx"])
+
+        children = controls_style.make_decoration_controls(decor, current)
+        return decor, children

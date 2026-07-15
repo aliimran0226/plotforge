@@ -13,10 +13,9 @@ import re
 import dash
 from dash import ALL, Input, Output, State, dcc
 
-from plotforge.callbacks.plot_callbacks import build_figure
+from plotforge.callbacks.plot_callbacks import _style_from_pattern_lists, build_figure
 from plotforge.data import store
 from plotforge.plots.base import PlotError
-from plotforge.styling import style_model
 
 #: Characters allowed in a download filename; everything else becomes '_'.
 _FILENAME_SAFE = re.compile(r"[^A-Za-z0-9._-]+")
@@ -56,6 +55,9 @@ def register_callbacks(app: dash.Dash) -> None:
         State({"type": "plot-opt", "name": ALL}, "value"),
         State({"type": "style", "field": ALL}, "value"),
         State({"type": "group-color", "group": ALL}, "value"),
+        State({"type": "decor-line", "idx": ALL, "prop": ALL}, "value"),
+        State({"type": "decor-band", "idx": ALL, "prop": ALL}, "value"),
+        State({"type": "decor-annot", "idx": ALL, "prop": ALL}, "value"),
         State("export-width", "value"),
         State("export-height", "value"),
         State("export-scale", "value"),
@@ -67,15 +69,7 @@ def register_callbacks(app: dash.Dash) -> None:
         n_clicks,
         token,
         chart_type,
-        _mapping_values,
-        _option_values,
-        _style_values,
-        _group_colors,
-        width,
-        height,
-        scale,
-        fmt,
-        filename,
+        *_pattern_and_settings,
     ):
         """Build the current figure at export size and send it for download."""
         if not n_clicks:
@@ -85,15 +79,14 @@ def register_callbacks(app: dash.Dash) -> None:
             return dash.no_update, "Upload data and build a figure first.", True
 
         ctx = dash.ctx
+        # states_list: 0 token, 1 chart type, 2 mapping, 3 options,
+        # 4-8 style/group/decoration patterns, 9-13 export settings.
         mapping = {i["id"]["name"]: i.get("value") for i in ctx.states_list[2]}
         options = {i["id"]["name"]: i.get("value") for i in ctx.states_list[3]}
-        style_values = {i["id"]["field"]: i.get("value") for i in ctx.states_list[4]}
-        group_colors = {
-            i["id"]["group"]: i.get("value")
-            for i in ctx.states_list[5]
-            if i.get("value")
-        }
-        style = style_model.from_values(style_values, group_colors)
+        style = _style_from_pattern_lists(ctx.states_list)
+        width, height, scale, fmt, filename = (
+            ctx.states_list[i].get("value") for i in range(9, 14)
+        )
 
         fmt = fmt if fmt in EXPORT_FORMATS else "png"
         width = int(width or style.width)

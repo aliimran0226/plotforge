@@ -63,13 +63,14 @@ Columns that don't fit a slot's type are greyed out rather than hidden, so you c
 
 ### 3. Style — make it publication-ready
 
-Six collapsible groups of controls, all live:
+Seven collapsible groups of controls, all live:
 
 - **Figure** — width/height, template (overall look), backgrounds, margins, border around the whole figure, axis line width
 - **Titles & Fonts** — figure title (text/size/color/alignment), global font, axis-title size
 - **X Axis / Y Axis** — title, fixed range (either bound may stay automatic), log scale, reversed, tick size/angle/format, tick marks (outside/inside, length, width), gridlines, zero line, axis line and mirrored "box" frame
 - **Colors & Groups** — qualitative palette (try *Safe* for colorblind-friendly figures), continuous colorscale, opacity, and manual per-group color pickers
 - **Legend** — show/hide, title, position (outside, below, or inside a corner), orientation, font size
+- **Reference lines & annotations** — horizontal/vertical threshold lines (dash style, color, label), shaded bands, and free-text labels at any data position
 
 **Reset style to defaults** at the top of the section undoes all styling in one click (your data and column mappings stay).
 

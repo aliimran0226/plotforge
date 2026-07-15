@@ -30,6 +30,20 @@ def group_color_id(group: str) -> dict:
     return {"type": "group-color", "group": group}
 
 
+def decor_id(kind: str, idx: int, prop: str) -> dict:
+    """Pattern-matching id for one property of one decoration entry.
+
+    ``kind`` is 'line', 'band', or 'annot'; entries of a kind share an
+    idx namespace managed by ``decor-store``.
+    """
+    return {"type": f"decor-{kind}", "idx": idx, "prop": prop}
+
+
+def decor_del_id(kind: str, idx: int) -> dict:
+    """Pattern-matching id for a decoration entry's remove button."""
+    return {"type": f"decor-del-{kind}", "idx": idx}
+
+
 # ---------------------------------------------------------------------------
 # Control table: (field, label, widget, extra)
 # widget: number | text | color | checkbox | dropdown | slider
@@ -235,6 +249,35 @@ def _widget(field: str, widget: str, default: object, extra: dict):
     )
 
 
+def _decorations_section() -> list:
+    """Content of the 'Reference lines & annotations' accordion item."""
+
+    def add_button(label: str, bid: str) -> dbc.Button:
+        return dbc.Button(label, id=bid, color="secondary", outline=True, size="sm")
+
+    return [
+        html.Div(
+            [
+                add_button("+ H line", "add-decor-hline"),
+                add_button("+ V line", "add-decor-vline"),
+                add_button("+ Band", "add-decor-band"),
+                add_button("+ Text", "add-decor-annot"),
+            ],
+            className="d-flex gap-1 flex-wrap mb-2",
+        ),
+        html.Div(
+            html.Small(
+                "Add threshold lines, shaded bands, or text labels.",
+                className="text-muted",
+            ),
+            id="decor-controls",
+        ),
+        dcc.Store(
+            id="decor-store", data={"line": [], "band": [], "annot": [], "next": 0}
+        ),
+    ]
+
+
 def build_style_controls() -> html.Div:
     """Static content of the Style accordion section."""
     defaults = defaults_by_field()
@@ -255,6 +298,9 @@ def build_style_controls() -> html.Div:
                 )
             )
         items.append(dbc.AccordionItem(rows, title=section_label))
+    items.append(
+        dbc.AccordionItem(_decorations_section(), title="Reference lines & annotations")
+    )
 
     return html.Div(
         [
@@ -335,3 +381,283 @@ def make_group_color_pickers(
             )
         )
     return rows
+
+
+# ---------------------------------------------------------------------------
+# Decoration entry cards (reference lines / bands / annotations)
+# ---------------------------------------------------------------------------
+
+#: Dash choices for reference-line orientation and dash style.
+_ORIENT_CHOICES = [
+    {"label": "Horizontal", "value": "h"},
+    {"label": "Vertical", "value": "v"},
+]
+_DASH_CHOICES = [
+    {"label": s.capitalize(), "value": s} for s in ("solid", "dash", "dot", "dashdot")
+]
+
+
+def _decor_card(kind: str, idx: int, title: str, body: list) -> dbc.Card:
+    """Frame of one decoration entry: header, remove button, inputs."""
+    header = html.Div(
+        [
+            html.Small(title, className="fw-bold"),
+            dbc.Button(
+                "Remove",
+                id=decor_del_id(kind, idx),
+                color="link",
+                size="sm",
+                className="p-0 text-danger small",
+            ),
+        ],
+        className="d-flex justify-content-between align-items-center mb-1",
+    )
+    return dbc.Card(dbc.CardBody([header, *body], className="p-2"), className="mb-2")
+
+
+def _decor_input(kind: str, idx: int, prop: str, label: str, widget, **kwargs):
+    """One labeled input inside a decoration card."""
+    return html.Div(
+        [
+            dbc.Label(label, className="small mb-0"),
+            widget(id=decor_id(kind, idx, prop), **kwargs),
+        ],
+        className="mb-1",
+    )
+
+
+def make_line_entry(idx: int, current: dict) -> dbc.Card:
+    """Card for one reference line."""
+    orient = current.get("orient") or "h"
+    body = [
+        _decor_input(
+            "line",
+            idx,
+            "orient",
+            "Orientation",
+            dcc.Dropdown,
+            options=_ORIENT_CHOICES,
+            value=orient,
+            clearable=False,
+        ),
+        _decor_input(
+            "line",
+            idx,
+            "value",
+            "Position (number or date)",
+            dbc.Input,
+            type="text",
+            value=current.get("value") or "",
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "line",
+            idx,
+            "dash",
+            "Line style",
+            dcc.Dropdown,
+            options=_DASH_CHOICES,
+            value=current.get("dash") or "dash",
+            clearable=False,
+        ),
+        _decor_input(
+            "line",
+            idx,
+            "width",
+            "Width",
+            dbc.Input,
+            type="number",
+            value=current.get("width", 1.5),
+            min=0.5,
+            max=10,
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "line",
+            idx,
+            "color",
+            "Color",
+            dbc.Input,
+            type="color",
+            value=current.get("color") or "#444444",
+            size="sm",
+        ),
+        _decor_input(
+            "line",
+            idx,
+            "label",
+            "Label (optional)",
+            dbc.Input,
+            type="text",
+            value=current.get("label") or "",
+            size="sm",
+            debounce=True,
+        ),
+    ]
+    title = "Horizontal line" if orient == "h" else "Vertical line"
+    return _decor_card("line", idx, title, body)
+
+
+def make_band_entry(idx: int, current: dict) -> dbc.Card:
+    """Card for one shaded band."""
+    body = [
+        _decor_input(
+            "band",
+            idx,
+            "orient",
+            "Orientation",
+            dcc.Dropdown,
+            options=_ORIENT_CHOICES,
+            value=current.get("orient") or "v",
+            clearable=False,
+        ),
+        _decor_input(
+            "band",
+            idx,
+            "start",
+            "From (number or date)",
+            dbc.Input,
+            type="text",
+            value=current.get("start") or "",
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "band",
+            idx,
+            "end",
+            "To",
+            dbc.Input,
+            type="text",
+            value=current.get("end") or "",
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "band",
+            idx,
+            "color",
+            "Fill color",
+            dbc.Input,
+            type="color",
+            value=current.get("color") or "#fdae61",
+            size="sm",
+        ),
+        _decor_input(
+            "band",
+            idx,
+            "opacity",
+            "Opacity",
+            dbc.Input,
+            type="number",
+            value=current.get("opacity", 0.2),
+            min=0.05,
+            max=1,
+            step=0.05,
+            size="sm",
+            debounce=True,
+        ),
+    ]
+    return _decor_card("band", idx, "Shaded band", body)
+
+
+def make_annot_entry(idx: int, current: dict) -> dbc.Card:
+    """Card for one text annotation."""
+    body = [
+        _decor_input(
+            "annot",
+            idx,
+            "text",
+            "Text",
+            dbc.Input,
+            type="text",
+            value=current.get("text") or "",
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "annot",
+            idx,
+            "x",
+            "X (number or date)",
+            dbc.Input,
+            type="text",
+            value=current.get("x") or "",
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "annot",
+            idx,
+            "y",
+            "Y",
+            dbc.Input,
+            type="text",
+            value=current.get("y") or "",
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "annot",
+            idx,
+            "size",
+            "Font size",
+            dbc.Input,
+            type="number",
+            value=current.get("size", 12),
+            min=6,
+            max=48,
+            size="sm",
+            debounce=True,
+        ),
+        _decor_input(
+            "annot",
+            idx,
+            "color",
+            "Color",
+            dbc.Input,
+            type="color",
+            value=current.get("color") or "#000000",
+            size="sm",
+        ),
+        html.Div(
+            [
+                dbc.Checkbox(
+                    id=decor_id("annot", idx, "arrow"),
+                    value=bool(current.get("arrow", True)),
+                ),
+                dbc.Label("Arrow to point", className="small mb-0 ms-1"),
+            ],
+            className="d-flex align-items-center mb-1",
+        ),
+    ]
+    return _decor_card("annot", idx, "Text annotation", body)
+
+
+_ENTRY_BUILDERS = {
+    "line": make_line_entry,
+    "band": make_band_entry,
+    "annot": make_annot_entry,
+}
+
+
+def make_decoration_controls(store: dict, current: dict[str, dict[int, dict]]) -> list:
+    """All decoration cards, rebuilt from the store's entry ids.
+
+    ``current`` maps kind -> idx -> {prop: value} and preserves what the
+    user already typed when the card list is regenerated.
+    """
+    cards = []
+    for kind, builder in _ENTRY_BUILDERS.items():
+        for idx in store.get(kind, []):
+            cards.append(builder(idx, current.get(kind, {}).get(idx, {})))
+    if not cards:
+        return [
+            html.Small(
+                "Add threshold lines, shaded bands, or text labels.",
+                className="text-muted",
+            )
+        ]
+    return cards

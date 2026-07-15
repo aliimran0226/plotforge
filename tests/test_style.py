@@ -167,6 +167,53 @@ def test_axis_title_override_hits_all_facets(sample_df):
     assert titles and all(t == "Dose (mg)" for t in titles)
 
 
+def test_apply_reference_lines_and_bands(grouped_fig):
+    style = style_model.StyleModel(
+        ref_lines=[
+            {"orient": "h", "value": "10", "color": "#111111", "dash": "dot"},
+            {"orient": "v", "value": "", "color": "#222222"},  # empty -> skipped
+        ],
+        ref_bands=[{"orient": "v", "start": "1", "end": "3", "opacity": 0.3}],
+    )
+    fig = apply_style(grouped_fig, style)
+    lines = [s for s in fig.layout.shapes if s.type == "line"]
+    rects = [s for s in fig.layout.shapes if s.type == "rect"]
+    assert len(lines) == 1 and lines[0].y0 == 10.0
+    assert lines[0].line.dash == "dot"
+    assert len(rects) == 1 and (rects[0].x0, rects[0].x1) == (1.0, 3.0)
+
+
+def test_apply_text_annotation(grouped_fig):
+    style = style_model.StyleModel(
+        annotations=[
+            {"text": "peak", "x": "2", "y": "40", "arrow": True, "size": 14},
+            {"text": "", "x": "1", "y": "1"},  # no text -> skipped
+        ]
+    )
+    fig = apply_style(grouped_fig, style)
+    annots = [a for a in fig.layout.annotations if a.text == "peak"]
+    assert len(annots) == 1
+    assert annots[0].x == 2.0 and annots[0].showarrow is True
+
+
+def test_from_values_decorations():
+    style = style_model.from_values(
+        {}, decorations={"ref_lines": [{"orient": "h", "value": "5"}]}
+    )
+    assert style.ref_lines == [{"orient": "h", "value": "5"}]
+    assert style.ref_bands == [] and style.annotations == []
+
+
+def test_entries_by_index_groups_props():
+    items = [
+        {"id": {"idx": 1, "prop": "value"}, "value": "5"},
+        {"id": {"idx": 0, "prop": "value"}, "value": "2"},
+        {"id": {"idx": 1, "prop": "color"}, "value": "#fff"},
+    ]
+    grouped = style_model.entries_by_index(items)
+    assert grouped == {1: {"value": "5", "color": "#fff"}, 0: {"value": "2"}}
+
+
 def test_outer_border_shape(grouped_fig):
     style = style_model.StyleModel(outer_border_on=True, outer_border_color="#222222")
     fig = apply_style(grouped_fig, style)

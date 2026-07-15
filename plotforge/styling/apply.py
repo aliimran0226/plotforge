@@ -78,8 +78,77 @@ def apply_style(fig: go.Figure, style: StyleModel) -> go.Figure:
     _apply_axis(fig, style, "y")
     _apply_colors(fig, style)
     _apply_legend(fig, style)
+    _apply_decorations(fig, style)
     _apply_outer_border(fig, style)
     return fig
+
+
+def _coord(value: object) -> object | None:
+    """Coerce a decoration coordinate: number if possible, else the raw
+    string (datetime/categorical axes take strings), None if empty."""
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return value
+
+
+def _num(value: object, default: float) -> float:
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
+def _apply_decorations(fig: go.Figure, style: StyleModel) -> None:
+    """Reference lines, shaded bands, and text annotations.
+
+    Safe to run every render: apply_style always receives a freshly
+    built figure, so decorations never accumulate.
+    """
+    for entry in style.ref_lines:
+        value = _coord(entry.get("value"))
+        if value is None:
+            continue
+        adder = fig.add_hline if entry.get("orient") == "h" else fig.add_vline
+        kwargs = dict(
+            line_color=entry.get("color") or "#444444",
+            line_dash=entry.get("dash") or "dash",
+            line_width=_num(entry.get("width"), 1.5),
+        )
+        if entry.get("label"):
+            kwargs["annotation_text"] = entry["label"]
+        adder(value, **kwargs)
+
+    for entry in style.ref_bands:
+        start, end = _coord(entry.get("start")), _coord(entry.get("end"))
+        if start is None or end is None:
+            continue
+        adder = fig.add_hrect if entry.get("orient") == "h" else fig.add_vrect
+        adder(
+            start,
+            end,
+            fillcolor=entry.get("color") or "#fdae61",
+            opacity=_num(entry.get("opacity"), 0.2),
+            line_width=0,
+            layer="below",
+        )
+
+    for entry in style.annotations:
+        x, y = _coord(entry.get("x")), _coord(entry.get("y"))
+        if not entry.get("text") or x is None or y is None:
+            continue
+        fig.add_annotation(
+            x=x,
+            y=y,
+            text=entry["text"],
+            showarrow=bool(entry.get("arrow")),
+            font=dict(
+                size=int(_num(entry.get("size"), 12)),
+                color=entry.get("color") or "#000000",
+            ),
+        )
 
 
 def _apply_outer_border(fig: go.Figure, style: StyleModel) -> None:

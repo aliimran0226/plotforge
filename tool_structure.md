@@ -64,6 +64,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-15 — Decorations as dynamic entry lists on StyleModel
+Reference lines, shaded bands, and text annotations are variable-length, which single pattern-id controls can't express. The design generalizes the group-color-picker precedent: a `dcc.Store` (`decor-store`) tracks entry ids per kind, a manage callback adds/removes entry cards (preserving typed values by reading all current pattern States), and every card input carries `{"type": "decor-<kind>", "idx": …, "prop": …}`. StyleModel holds the results as list-of-dict fields (`ref_lines`/`ref_bands`/`annotations`) filled via a `decorations` argument to `from_values` — never from the scalar `values` dict. `apply_style` re-adds them on every pass, which is safe because it always receives a freshly built figure. Coordinates are text inputs coerced number-first so datetime/categorical axis positions work.
+
 ### 2026-07-15 — Outer figure border as a paper-coordinate shape
 Plotly has no "canvas border" property, and paper coordinates (0..1) span only the plot region. The outer border is therefore a rect shape extended past the paper domain by `margin / plot-size` — which requires a concrete figure size, so the export callback now bakes the export width/height into the StyleModel before building (rendered output is identical; kaleido's size args agree with the layout). Auto-sized figures fall back to framing the plot region. Tick-mark style is a dropdown whose empty value means "leave the template alone" — the same "auto"-capable-control reasoning as the background colors.
 

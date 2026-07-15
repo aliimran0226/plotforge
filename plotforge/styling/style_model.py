@@ -93,6 +93,16 @@ class StyleModel:
     #: color pickers, not from a single control.
     group_colors: dict[str, str] = field(default_factory=dict)
 
+    # --- Reference lines / bands / annotations ------------------------------
+    #: Entry dicts filled from the dynamic decoration controls (see
+    #: ``ui/controls_style.py``), not from single pattern-id controls:
+    #: line:  {orient, value, color, dash, width, label}
+    #: band:  {orient, start, end, color, opacity}
+    #: annot: {text, x, y, arrow, size, color}
+    ref_lines: list[dict] = field(default_factory=list)
+    ref_bands: list[dict] = field(default_factory=list)
+    annotations: list[dict] = field(default_factory=list)
+
     # --- Legend ------------------------------------------------------------
     legend_show: bool = True
     legend_title: str = ""  # "" = automatic (column name)
@@ -124,20 +134,29 @@ def _convert(value: object, annotation: object) -> object:
     return value
 
 
+#: Fields populated from dynamic control groups (not one control each);
+#: from_values ignores them in ``values`` and fills them from arguments.
+_COLLECTION_FIELDS = {"group_colors", "ref_lines", "ref_bands", "annotations"}
+
+
 def from_values(
-    values: dict[str, object], group_colors: dict[str, str] | None = None
+    values: dict[str, object],
+    group_colors: dict[str, str] | None = None,
+    decorations: dict[str, list[dict]] | None = None,
 ) -> StyleModel:
     """Build a StyleModel from ``field name -> control value``.
 
     Unknown keys are ignored; missing fields keep their defaults; values
     that fail conversion (e.g. half-typed numbers) also keep defaults so
-    a live keystroke never crashes the render callback.
+    a live keystroke never crashes the render callback. ``decorations``
+    maps collection field names (``ref_lines``/``ref_bands``/
+    ``annotations``) to their entry lists.
     """
     style = StyleModel()
     hints = typing.get_type_hints(StyleModel)
     valid = {f.name for f in fields(StyleModel)}
     for name, raw in values.items():
-        if name not in valid or name == "group_colors":
+        if name not in valid or name in _COLLECTION_FIELDS:
             continue
         try:
             setattr(style, name, _convert(raw, hints[name]))
@@ -145,6 +164,9 @@ def from_values(
             continue  # keep the default rather than erroring mid-typing
     if group_colors:
         style.group_colors = dict(group_colors)
+    for name, entries in (decorations or {}).items():
+        if name in _COLLECTION_FIELDS and entries:
+            setattr(style, name, list(entries))
     return style
 
 
@@ -152,3 +174,13 @@ def defaults_by_field() -> dict[str, object]:
     """Field name -> default value (used by the reset-style button)."""
     model = StyleModel()
     return {f.name: getattr(model, f.name) for f in fields(StyleModel)}
+
+
+def entries_by_index(pattern_items: list[dict]) -> dict[int, dict]:
+    """Group ctx pattern entries ``{'id': {'idx': i, 'prop': p}, 'value': v}``
+    into ``idx -> {prop: value}`` dicts (one per decoration entry)."""
+    grouped: dict[int, dict] = {}
+    for item in pattern_items:
+        ident = item.get("id") or {}
+        grouped.setdefault(ident.get("idx"), {})[ident.get("prop")] = item.get("value")
+    return grouped
