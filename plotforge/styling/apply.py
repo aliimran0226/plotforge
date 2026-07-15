@@ -96,19 +96,31 @@ def _apply_title(fig: go.Figure, style: StyleModel) -> None:
     )
 
 
-def _axis_range(
+def _axis_bounds(
     lo: float | None, hi: float | None, log: bool, reverse: bool
-) -> list[float] | None:
-    """Explicit axis range, converted to log10 units for log axes."""
-    if lo is None or hi is None:
-        return None
+) -> tuple[list[float | None] | None, object]:
+    """(range, autorange) for the axis, honoring partially fixed bounds.
+
+    Plotly expects log-axis ranges as log10 exponents (non-positive
+    bounds have no log and are dropped). A single fixed bound uses
+    plotly's autorange 'min'/'max' modes, which compute only the
+    missing end. Returns autorange=None when the axis default should
+    be left alone (px.imshow, for one, relies on its own 'reversed').
+    """
     if log:
-        # Plotly expects log-axis ranges as exponents; guard against
-        # non-positive bounds which have no log.
-        if lo <= 0 or hi <= 0:
-            return None
-        lo, hi = math.log10(lo), math.log10(hi)
-    return [hi, lo] if reverse else [lo, hi]
+        lo = math.log10(lo) if lo is not None and lo > 0 else None
+        hi = math.log10(hi) if hi is not None and hi > 0 else None
+    if lo is None and hi is None:
+        return None, ("reversed" if reverse else None)
+    if lo is not None and hi is not None:
+        return ([hi, lo] if reverse else [lo, hi]), False
+    if reverse:  # reversed axes store their range as [high, low]
+        rng = [None, lo] if hi is None else [hi, None]
+        auto = "max reversed" if hi is None else "min reversed"
+    else:
+        rng = [lo, None] if hi is None else [None, hi]
+        auto = "max" if hi is None else "min"
+    return rng, auto
 
 
 def _apply_axis(fig: go.Figure, style: StyleModel, which: str) -> None:
@@ -135,12 +147,11 @@ def _apply_axis(fig: go.Figure, style: StyleModel, which: str) -> None:
     if s["grid_color"].lower() != getattr(_DEFAULTS, f"{which}_grid_color"):
         kwargs["gridcolor"] = s["grid_color"]
 
-    rng = _axis_range(s["min"], s["max"], s["log"], s["reversed"])
+    rng, autorange = _axis_bounds(s["min"], s["max"], s["log"], s["reversed"])
     if rng is not None:
         kwargs["range"] = rng
-        kwargs["autorange"] = False
-    elif s["reversed"]:
-        kwargs["autorange"] = "reversed"
+    if autorange is not None:
+        kwargs["autorange"] = autorange
 
     updater = fig.update_xaxes if which == "x" else fig.update_yaxes
     updater(**kwargs)

@@ -75,6 +75,32 @@ def test_apply_reversed_axis(grouped_fig):
     assert fig.layout.yaxis.autorange == "reversed"
 
 
+def test_apply_one_sided_ranges(grouped_fig):
+    # A single fixed bound must be honored via autorange min/max modes.
+    fig = apply_style(grouped_fig, style_model.StyleModel(x_min=0.0, y_max=50.0))
+    assert fig.layout.xaxis.range == (0.0, None)
+    assert fig.layout.xaxis.autorange == "max"  # max stays automatic
+    assert fig.layout.yaxis.range == (None, 50.0)
+    assert fig.layout.yaxis.autorange == "min"
+
+
+def test_apply_one_sided_range_reversed(grouped_fig):
+    fig = apply_style(grouped_fig, style_model.StyleModel(x_min=1.0, x_reversed=True))
+    assert fig.layout.xaxis.range == (None, 1.0)
+    assert fig.layout.xaxis.autorange == "max reversed"
+
+
+def test_heatmap_keeps_its_reversed_y_axis(sample_df):
+    # px.imshow reverses the y axis itself; apply_style must not
+    # override that when the user set no explicit range.
+    import plotly.express as px_
+
+    fig = px_.imshow(sample_df[["dose", "response"]].head(3))
+    autorange_before = fig.layout.yaxis.autorange
+    apply_style(fig, style_model.StyleModel())
+    assert fig.layout.yaxis.autorange == autorange_before
+
+
 def test_apply_palette_recolors_groups(grouped_fig):
     style = style_model.StyleModel(palette="Safe (colorblind)")
     fig = apply_style(grouped_fig, style)

@@ -39,14 +39,11 @@ def _error_tuple(message: str) -> tuple:
     return (dash.no_update,) * (_N_OUTPUTS - 2) + (message, True)
 
 
-def _ingest(
-    contents: str, filename: str, sheet: str | None, token: str | None
-) -> tuple:
-    """Parse an upload (or sheet switch) and refresh the server-side cache.
+def _ingest(raw: bytes, filename: str, sheet: str | None, token: str | None) -> tuple:
+    """Parse file bytes (upload or sheet switch) and refresh the cache.
 
     Returns the tuple of output values in the order of ``_outputs()``.
     """
-    raw = loader.decode_upload(contents)
     sheets = loader.list_sheets(raw, filename)
     active_sheet = (
         sheet
@@ -96,7 +93,10 @@ def register_callbacks(app: dash.Dash) -> None:
     """Attach the data-section callbacks to ``app``."""
 
     @app.callback(
-        _outputs(duplicate=False),
+        # The extra output resets contents so the same file can be
+        # uploaded twice in a row (dcc.Upload only fires when contents
+        # *change*); the reset's echo is absorbed by the guard below.
+        _outputs(duplicate=False) + [Output("data-upload", "contents")],
         Input("data-upload", "contents"),
         State("data-upload", "filename"),
         prevent_initial_call=True,
@@ -106,33 +106,26 @@ def register_callbacks(app: dash.Dash) -> None:
         if not contents or not filename:
             raise dash.exceptions.PreventUpdate
         try:
+            raw = loader.decode_upload(contents)
             # A fresh upload always gets a fresh token.
-            return _ingest(contents, filename, sheet=None, token=None)
+            return _ingest(raw, filename, sheet=None, token=None) + (None,)
         except loader.LoaderError as exc:
-            return _error_tuple(str(exc))
+            return _error_tuple(str(exc)) + (None,)
 
     @app.callback(
         _outputs(duplicate=True),
         Input("sheet-picker", "value"),
-        State("data-upload", "contents"),
-        State("data-upload", "filename"),
         State("dataset-token", "data"),
         prevent_initial_call=True,
     )
-    def handle_sheet_switch(
-        sheet: str | None,
-        contents: str | None,
-        filename: str | None,
-        token: str | None,
-    ):
+    def handle_sheet_switch(sheet: str | None, token: str | None):
         """Re-parse the cached workbook when the user picks another sheet."""
         dataset = store.get(token)
         # Ignore programmatic value changes (e.g. right after upload).
         if not sheet or dataset is None or dataset.active_sheet == sheet:
             raise dash.exceptions.PreventUpdate
-        if not contents or not filename:
-            raise dash.exceptions.PreventUpdate
         try:
-            return _ingest(contents, filename, sheet=sheet, token=token)
+            # The raw bytes are cached, so no re-upload is needed.
+            return _ingest(dataset.raw, dataset.filename, sheet=sheet, token=token)
         except loader.LoaderError as exc:
             return _error_tuple(str(exc))

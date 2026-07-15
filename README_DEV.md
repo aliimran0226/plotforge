@@ -120,12 +120,12 @@ Everything lives in `plotforge/data/loader.py`:
 
 | Callback | Module | Triggers (Inputs) | Writes (Outputs) |
 |---|---|---|---|
-| `handle_upload` | `callbacks/data_callbacks.py` | `data-upload.contents` | dataset token, summary, preview, sheet picker, data error |
-| `handle_sheet_switch` | `callbacks/data_callbacks.py` | `sheet-picker.value` | same as above (duplicate outputs) |
+| `handle_upload` | `callbacks/data_callbacks.py` | `data-upload.contents` | dataset token, summary, preview, sheet picker, data error, `data-upload.contents` (reset to `None` so the same file can be re-uploaded) |
+| `handle_sheet_switch` | `callbacks/data_callbacks.py` | `sheet-picker.value` (re-parses from the cached `Dataset.raw`) | same as upload minus the contents reset (duplicate outputs) |
 | `rebuild_mapping_ui` | `callbacks/plot_callbacks.py` | `chart-type.value`, `dataset-token.data` | `mapping-controls`, `plot-options-controls` |
 | `render_figure` | `callbacks/plot_callbacks.py` | token, chart type, all `{"type":"mapping"}`, `{"type":"plot-opt"}`, `{"type":"style"}`, `{"type":"group-color"}` values | `figure-container`, `plot-error` |
 | `rebuild_group_pickers` | `callbacks/style_callbacks.py` | token, all mapping values | `group-color-controls` |
-| `reset_style` | `callbacks/style_callbacks.py` | `reset-style.n_clicks` | every `{"type":"style"}` control value |
+| `reset_style` | `callbacks/style_callbacks.py` | `reset-style.n_clicks` | every `{"type":"style"}` control value and every `{"type":"group-color"}` picker (reseeded from the default palette) |
 | `export_figure` | `callbacks/export_callbacks.py` | `export-button.n_clicks` (everything else as State) | `export-download.data`, `export-error` |
 
 Conventions: callbacks stay thin — parsing, figure building, and styling are plain functions in `data/`, `plots/`, `styling/` so they're unit-testable without Dash. Pattern-matching ids (`{"type": ..., "name"/"field"/"group": ...}`) are how one callback serves controls that are generated at runtime.

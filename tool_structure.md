@@ -64,6 +64,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-15 — Upload contents are cleared after ingest; sheet switches read the cache
+`dcc.Upload` only fires when its contents *change*, so uploading the same file twice was a silent no-op. The upload callback now also outputs `data-upload.contents = None` (its own input — Dash allows the self-loop; the echo is absorbed by the existing empty-contents guard). Consequence: the sheet-switch callback can no longer read the upload contents, so it re-parses from `Dataset.raw` in the server-side cache instead — which is why the raw bytes were cached in the first place. One-sided axis ranges are now honored too, via plotly's `autorange: "min"/"max"` partial modes; apply_style leaves `autorange` untouched when the user expressed no opinion (px.imshow's reversed y axis depends on that).
+
 ### 2026-07-15 — Plots pre-aggregate what px won't
 `px.pie` never merges duplicate category rows (duplicate slices, and per-slice colors misalign once plotly.js merges labels client-side), so the pie plot aggregates to one row per category before building — sum for a mapped values column, row counts otherwise. Derived count columns (pie, bar) use an internal `__plotforge_count__` name displayed as "count" via `labels=`, so datasets with a real `count`/`size` column can't collide. `config.MAX_CATEGORIES` (previously unused) now caps pie slices with a friendly PlotError, and the density plot's `validate` refuses filled contours combined with color grouping (px forbids it; the fills would hide each other).
 

@@ -62,12 +62,21 @@ def register_callbacks(app: dash.Dash) -> None:
 
     @app.callback(
         Output({"type": "style", "field": ALL}, "value"),
+        Output({"type": "group-color", "group": ALL}, "value"),
         Input("reset-style", "n_clicks"),
         prevent_initial_call=True,
     )
     def reset_style(n_clicks):
-        """Snap every style control back to its StyleModel default."""
+        """Snap every style control (and group picker) back to defaults."""
         if not n_clicks:
             raise dash.exceptions.PreventUpdate
         defaults = defaults_by_field()
-        return [defaults.get(item["id"]["field"]) for item in ctx.outputs_list]
+        style_values = [
+            defaults.get(item["id"]["field"]) for item in ctx.outputs_list[0]
+        ]
+        palette = palette_colors(str(defaults["palette"]))
+        group_values = [
+            controls_style._to_hex(palette[i % len(palette)])
+            for i in range(len(ctx.outputs_list[1]))
+        ]
+        return style_values, group_values
