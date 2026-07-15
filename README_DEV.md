@@ -145,6 +145,8 @@ Everything lives in `plotforge/data/loader.py`:
 
 Conventions: callbacks stay thin — parsing, figure building, and styling are plain functions in `data/`, `plots/`, `styling/` so they're unit-testable without Dash. Pattern-matching ids (`{"type": ..., "name"/"field"/"group": ...}`) are how one callback serves controls that are generated at runtime.
 
+Gotcha: for pattern ids, `ctx.triggered_id` is an **unhashable** `AttributeDict` — testing it with `in some_dict` raises `TypeError` instead of returning `False`. Guard with `isinstance(trigger, str)` (or `isinstance(trigger, dict)`) before any membership/equality logic.
+
 ## Testing
 
 ```bash

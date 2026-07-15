@@ -106,6 +106,38 @@ def test_overlay_choices_are_registered():
     assert names == list(overlay.OVERLAYABLE)
 
 
+def test_fresh_layer_card_prefills_required_mappings():
+    # A new layer must default-fill required slots (like the base
+    # mapping UI) so it renders immediately instead of erroring.
+    from plotforge.ui.controls_layers import make_layer_card
+
+    card = make_layer_card(
+        idx=0,
+        number=1,
+        chart="line",
+        columns=list(TYPES),
+        column_types=TYPES,
+        current_mapping={},
+        secondary_y=False,
+    )
+
+    values = {}
+
+    def walk(node):
+        node_id = getattr(node, "id", None)
+        if isinstance(node_id, dict) and node_id.get("type") == "layer-map":
+            values[node_id["name"]] = getattr(node, "value", None)
+        for child in getattr(node, "children", None) or []:
+            walk(child)
+        body = getattr(node, "children", None)
+        if body is not None and not isinstance(body, list):
+            walk(body)
+
+    walk(card)
+    assert values["x"] and values["y"]
+    assert values["x"] != values["y"]  # 'used' set prevents double-assignment
+
+
 def test_layer_gets_its_own_palette_slot(sample_df):
     # Base (no grouping) and a one-trace layer both start at px's first
     # color; the layer tag must give them different palette slots.

@@ -143,7 +143,10 @@ def register_callbacks(app: dash.Dash) -> None:
             "annot": entries_by_index(ctx.states_list[3]),
         }
 
-        if trigger in _ADDERS:
+        # NB: for pattern ids, ctx.triggered_id is an *unhashable*
+        # AttributeDict - it must never be used in a dict-membership
+        # test directly (that raises TypeError, not False).
+        if isinstance(trigger, str) and trigger in _ADDERS:
             kind, seed = _ADDERS[trigger]
             idx = decor["next"]
             decor[kind].append(idx)

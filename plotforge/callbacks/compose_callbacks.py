@@ -80,6 +80,14 @@ def register_callbacks(app: dash.Dash) -> None:
             dataset=dataset,
             title=f"{get_plot(chart_type).label} - {dataset.filename}",
         )
+        # Refuse to snapshot a figure that can't build - a broken panel
+        # would only surface later, at preview/export time.
+        try:
+            compose.build_panel_figure(spec, compose.CELL_WIDTH, compose.CELL_HEIGHT)
+        except PlotError as exc:
+            return dash.no_update, f"Fix the figure before saving it: {exc}", True
+        except Exception as exc:
+            return dash.no_update, f"Cannot save this figure: {exc}", True
         compose.save_panel(spec)
         return controls_compose.make_panel_list(), "", False
 

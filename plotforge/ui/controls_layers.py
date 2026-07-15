@@ -102,6 +102,7 @@ def make_layer_card(
             className="mb-1",
         ),
     ]
+    used: set[str] = set()
     for spec in layer_mapping_specs(plot_cls):
         required = spec in plot_cls.required_mappings
         value = current_mapping.get(spec.name)
@@ -109,6 +110,20 @@ def make_layer_card(
             value not in column_types or column_types[value] not in spec.kinds
         ):
             value = None
+        if not value and required:
+            # Default like the base mapping UI: first not-yet-used column
+            # of an accepted kind, so a fresh layer renders immediately
+            # instead of erroring until columns are picked.
+            value = next(
+                (
+                    c
+                    for c in columns
+                    if column_types.get(c) in spec.kinds and c not in used
+                ),
+                None,
+            )
+        if value:
+            used.add(value)
         label = spec.label + ("" if required else " (optional)")
         rows.append(
             html.Div(

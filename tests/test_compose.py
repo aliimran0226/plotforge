@@ -107,3 +107,13 @@ def test_compose_grid_geometry(panel_spec):
 def test_compose_grid_requires_panels():
     with pytest.raises(ValueError, match="No panels"):
         compose.compose_grid([], columns=2)
+
+
+def test_compose_grid_error_names_the_panel(panel_spec):
+    from plotforge.plots.base import PlotError
+
+    # A panel with a broken layer must fail with the panel's label and
+    # title in the message, not just the raw layer error.
+    panel_spec.layers = [{"chart": "line", "mapping": {}}]
+    with pytest.raises(PlotError, match=r"Panel \(a\) \(Scatter - sample\.csv\)"):
+        compose.compose_grid([panel_spec], columns=1)

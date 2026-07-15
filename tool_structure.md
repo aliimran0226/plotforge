@@ -69,6 +69,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-16 — Layout served as a function, not a snapshot
+`app.layout = build_layout` (the function, not its result): parts of the layout mirror server-side state — the Compose panel list — and a layout built once at server start froze that list, so a page reload showed no panels while preview/export still used them. Dash re-invokes a callable layout per page load. Same browser-audit round: fresh overlay layers now default-fill their required mappings (they used to error until columns were picked), `save_panel` refuses figures that don't build, and compose errors name the offending panel.
+
 ### 2026-07-15 — App-chrome refresh: fit-window figures, dark mode, sample data
 `StyleModel.width` is now `int | None` with `None` (the default) meaning "fit the window": apply_style sets `autosize` instead of a width and `dcc.Graph` runs with `responsive: True`; export/compose always pin a concrete width before building, and the outer border falls back to framing the plot region when no width is known. Dark mode is app-chrome only — a clientside callback flips Bootstrap 5.3's `data-bs-theme` on `<html>`; figures keep their plotly template (they're the artifact, the tool isn't). `assets/custom.css` restyles the chrome (scrollable sidebar + sticky figure, colored column-type badges with explicit dark variants for the react-select/dash-table widgets that hardcode light colors). A built-in demo dataset loads through the same `_register` path as uploads, so first-run users see every control working without hunting for a file.
 

@@ -25,6 +25,7 @@ from PIL import Image
 
 from plotforge.data.store import Dataset
 from plotforge.figure import build_figure
+from plotforge.plots.base import PlotError
 from plotforge.styling import style_model
 
 #: Keep at most this many saved panels.
@@ -155,7 +156,14 @@ def compose_grid(
     cells = itertools.product(range(rows), range(columns))
     for (row, col), (position, spec) in zip(cells, enumerate(panels), strict=False):
         label = panel_label(position) if labels else ""
-        fig = build_panel_figure(spec, cell_width, cell_height, label)
+        try:
+            fig = build_panel_figure(spec, cell_width, cell_height, label)
+        except PlotError as exc:
+            # Name the offending panel - the raw message ("Layer 1
+            # needs...") gives no hint which saved figure is broken.
+            raise PlotError(
+                f"Panel {panel_label(position)} ({spec.title}): {exc}"
+            ) from exc
         png = fig.to_image(
             format="png", width=cell_width, height=cell_height, scale=scale
         )

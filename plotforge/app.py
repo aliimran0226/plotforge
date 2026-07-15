@@ -32,7 +32,10 @@ def create_app() -> dash.Dash:
         # phases add them dynamically; don't error on missing ids.
         suppress_callback_exceptions=True,
     )
-    app.layout = build_layout()
+    # Assigned as a function so the layout is rebuilt per page load:
+    # parts of it reflect server-side state (the Compose panel list),
+    # which would otherwise be frozen at server-start.
+    app.layout = build_layout
     # App-chrome dark mode: flips Bootstrap's color mode on <html>.
     # Figures are unaffected - their look comes from the plotly template.
     app.clientside_callback(
