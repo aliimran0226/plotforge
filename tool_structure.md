@@ -9,12 +9,15 @@ run.py                     Entry point: starts server, opens browser tab
 plotforge/
 ├── app.py                 Dash app factory, layout assembly
 ├── config.py              Defaults: figure size, fonts, palettes, themes
+├── figure.py              build_figure(): the ONE build path (render/export/compose)
+├── compose.py             Saved panels + grid stitching (kaleido + pillow)
 ├── data/
 │   ├── loader.py          File parsing (csv/tsv/xlsx), sheet selection, dtype inference
 │   └── store.py           Server-side data cache keyed by session
 ├── plots/
 │   ├── registry.py        Plot-type registry — THE extension point
 │   ├── base.py            BasePlot abstract class
+│   ├── overlay.py         Overlay layers: merge extra charts onto the base axes
 │   └── <one module per chart type>
 ├── styling/
 │   ├── style_model.py     Dataclass capturing ALL style options
@@ -23,9 +26,11 @@ plotforge/
 │   ├── layout.py          Page skeleton: sidebar (controls) + main (figure)
 │   ├── controls_data.py   Upload widget, sheet picker, data preview
 │   ├── controls_mapping.py Chart type selector + dynamic column mapping
-│   ├── controls_style.py  Accordion of style controls
-│   └── controls_export.py Export size / scale / format / filename
-└── callbacks/             Thin Dash callbacks (data, plot, export)
+│   ├── controls_layers.py Overlay-layer cards
+│   ├── controls_style.py  Accordion of style controls + decoration cards
+│   ├── controls_export.py Export size / scale / format / filename
+│   └── controls_compose.py Panel list + grid settings
+└── callbacks/             Thin Dash callbacks (data, plot, layer, style, export, compose)
 tests/                     pytest suite + fixture data files
 ```
 
@@ -64,6 +69,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-15 — Composition stitches rendered pixels instead of merging subplots
+Combining arbitrary already-built px figures into one `make_subplots` grid is a minefield (shared coloraxes, legend collisions, per-figure margins), so composition renders each saved panel at the cell size via kaleido and pastes the PNGs into a pillow canvas. Panels keep their own legends and styling; the trade-off is raster-only composition export (PNG/JPG). A panel snapshot stores the *raw control values* plus a direct reference to the `Dataset` object — not the cache token — so panels survive dataset-cache eviction and later uploads. `build_figure` moved from `callbacks/plot_callbacks.py` to `plotforge/figure.py` so compose (non-callback code) can use the identical build path; pillow became a runtime dependency.
+
 ### 2026-07-15 — Overlay layers reuse the plot registry, not a new abstraction
 An overlay layer is just another registered plot (restricted to the cartesian set in `plots/overlay.py:OVERLAYABLE`) built with default options and its traces appended to the base figure — optionally on a right-hand `yaxis2`. This reuses `validate()`/`build()` untouched; the merge only names nameless traces (after the layer's y column) and tags each trace with `meta={"plotforge_layer": n}` so `apply_style`'s recoloring gives every layer its own palette slots (all px figures start at the same first color). Facets + layers are refused: there is no single target axis. Layer errors are re-raised prefixed with "Layer N:" so the shared error alert stays unambiguous. The card UI follows the decorations dynamic-entry pattern with one twist: rebuilding cards recreates components that are Inputs of the managing callback itself, so `layers-store` also carries a structure fingerprint that turns the rebuild echo into a PreventUpdate instead of a loop.
 
@@ -93,5 +101,6 @@ Step-by-step guides (new chart type, new style option, new file format) live in 
 
 - Background/gridline color pickers can't express "auto", so re-picking the exact default color is not treated as an override (see the style-controls decision above)
 - Figure "recipes" (save/load a mapping+style configuration)
-- Multi-panel figure composition
+- Composition export is raster-only (stitched pixels); vector composition would need subplot merging
 - Per-facet axis overrides (controls currently apply to all subplot axes)
+- Overlay layers use each chart's default options (no per-layer option widgets)

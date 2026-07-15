@@ -135,6 +135,10 @@ Everything lives in `plotforge/data/loader.py`:
 | `manage_layers` | `callbacks/layer_callbacks.py` | `add-layer`, `{"type":"layer-del"}` clicks, layer chart dropdowns, dataset token | `layers-store`, `layer-controls` (fingerprint in the store guards against the rebuild echo) |
 | `reset_style` | `callbacks/style_callbacks.py` | `reset-style.n_clicks` | every `{"type":"style"}` control value and every `{"type":"group-color"}` picker (reseeded from the default palette) |
 | `export_figure` | `callbacks/export_callbacks.py` | `export-button.n_clicks` (everything else as State) | `export-download.data`, `export-error` |
+| `save_panel` | `callbacks/compose_callbacks.py` | `save-panel.n_clicks` (reads the same States as export) | `panel-list`, `compose-error` |
+| `manage_panels` | `callbacks/compose_callbacks.py` | `{"type":"panel-remove"/"panel-up"}` clicks | `panel-list` |
+| `preview_composition` | `callbacks/compose_callbacks.py` | `compose-preview.n_clicks` | `figure-container` (duplicate), `compose-error` |
+| `export_composition` | `callbacks/compose_callbacks.py` | `compose-export.n_clicks` | `compose-download.data`, `compose-error` |
 
 Conventions: callbacks stay thin — parsing, figure building, and styling are plain functions in `data/`, `plots/`, `styling/` so they're unit-testable without Dash. Pattern-matching ids (`{"type": ..., "name"/"field"/"group": ...}`) are how one callback serves controls that are generated at runtime.
 

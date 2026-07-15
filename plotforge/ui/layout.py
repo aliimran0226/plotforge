@@ -12,6 +12,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from plotforge import __version__
+from plotforge.ui.controls_compose import build_compose_controls
 from plotforge.ui.controls_data import build_data_controls
 from plotforge.ui.controls_export import build_export_controls
 from plotforge.ui.controls_mapping import build_chart_controls
@@ -31,6 +32,9 @@ def build_layout() -> dbc.Container:
             ),
             dbc.AccordionItem(
                 build_export_controls(), title="4. Export", item_id="export"
+            ),
+            dbc.AccordionItem(
+                build_compose_controls(), title="5. Compose", item_id="compose"
             ),
         ],
         active_item="data",

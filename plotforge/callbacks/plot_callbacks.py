@@ -16,11 +16,11 @@ import dash
 from dash import ALL, Input, Output, State, dcc, html
 
 from plotforge.data import store
+from plotforge.figure import build_figure
 from plotforge.plots import overlay
-from plotforge.plots.base import PlotError, clean_mapping, merged_options
+from plotforge.plots.base import PlotError
 from plotforge.plots.registry import all_plots, get_plot
 from plotforge.styling import style_model
-from plotforge.styling.apply import apply_style
 from plotforge.ui import controls_mapping
 
 #: dcc.Graph config: keep the modebar's PNG download as a quick fallback
@@ -68,29 +68,6 @@ def _no_data_placeholder() -> html.P:
         "Upload a data file to get started.",
         className="text-muted text-center mt-5",
     )
-
-
-def build_figure(
-    chart_type: str,
-    dataset: store.Dataset,
-    mapping: dict,
-    options: dict,
-    style: style_model.StyleModel | None = None,
-    layers: list[dict] | None = None,
-):
-    """Pure figure-building path shared by render and export.
-
-    Returns a fully styled plotly Figure. Raises PlotError for
-    user-fixable issues.
-    """
-    plot_cls = get_plot(chart_type)
-    mapping = clean_mapping(mapping)
-    options = merged_options(plot_cls, options)
-    plot_cls.validate(mapping, dataset.column_types, options)
-    fig = plot_cls.build(dataset.df, mapping, options)
-    if layers:
-        overlay.add_layers(fig, dataset.df, dataset.column_types, mapping, layers)
-    return apply_style(fig, style or style_model.StyleModel())
 
 
 def register_callbacks(app: dash.Dash) -> None:

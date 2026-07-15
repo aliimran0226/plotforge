@@ -7,6 +7,8 @@ PlotForge runs on your own computer and opens in your browser. Upload a CSV, TSV
 - 13 chart types: scatter, line, bar, histogram, box, violin, strip/jitter, heatmap, 2D density, ECDF, area, pie, and error-bar plots
 - Deep styling: sizes, fonts, titles, per-axis ranges/log/ticks/grids, color palettes (including colorblind-safe), per-group colors, legend placement, templates
 - High-DPI export at any pixel size with a 1–5× scale factor, plus vector SVG/PDF output
+- Overlay layers (extra charts on the same axes, optional secondary Y) and a Compose section that stitches saved figures into a labeled multi-panel grid
+- Reference lines, shaded bands, and text annotations
 - Your data never leaves your machine
 
 ## Installation
@@ -80,6 +82,10 @@ Seven collapsible groups of controls, all live:
 Set the output size in pixels, a **scale factor** (pixel multiplier for high-DPI output — scale 3 of a 1200×800 figure yields 3600×2400 px, roughly 300 DPI at print size), the format (PNG, JPG, or vector SVG/PDF — vector formats stay sharp at any size and are what most journals prefer), and a filename, then click **Export figure**. The download uses exactly the figure and style you see, rendered at the export size rather than the on-screen size.
 
 The small camera icon in the figure's toolbar also saves a quick screen-resolution PNG.
+
+### 5. Compose — grids of multiple figures
+
+Build a figure, click **Save current figure as panel**, and repeat for as many figures as you need (different chart types, styles, even different datasets). Then choose the number of grid columns, the size of each cell, and whether to add **(a), (b), (c)** panel labels — **Preview** shows the assembled grid in the figure area, **Export grid** downloads it as one PNG/JPG. Panels can be reordered (**Up**) or removed from the list.
 
 ## Supported file formats
 

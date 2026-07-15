@@ -13,8 +13,9 @@ import re
 import dash
 from dash import ALL, Input, Output, State, dcc
 
-from plotforge.callbacks.plot_callbacks import _style_from_pattern_lists, build_figure
+from plotforge.callbacks.plot_callbacks import _style_from_pattern_lists
 from plotforge.data import store
+from plotforge.figure import build_figure
 from plotforge.plots import overlay
 from plotforge.plots.base import PlotError
 
