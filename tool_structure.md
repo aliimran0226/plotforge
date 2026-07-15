@@ -64,6 +64,9 @@ Long data needs x+y, wide-matrix mode needs neither, and the registry's `require
 ### 2026-07-11 — run.py scans for a free port
 Deviation from the plan's fixed 8050: this machine (and many dev machines) already had 8050 occupied, so the default is now "first free port from 8050 upward" with `--port` as an explicit override that fails loudly instead.
 
+### 2026-07-15 — Loader sniffs delimiters from a whitelist
+`pd.read_csv(sep=None)` sniffs over *any* character and corrupted single-column files (it happily picked a letter from the header as the delimiter). The loader now sniffs with `csv.Sniffer` restricted to `, ; \t |` and falls back to a comma, which is harmless for single-column files. Trade-off: exotic delimiters (spaces, `:`) are no longer auto-detected — none were reliably detected before either.
+
 ## Extension recipes
 
 Step-by-step guides (new chart type, new style option, new file format) live in [README_DEV.md](README_DEV.md#extension-guides), along with the callback map. This file only records why the seams are where they are.

@@ -56,6 +56,29 @@ def test_parse_upload_roundtrip(fixtures_dir):
 
 
 # ---------------------------------------------------------------------------
+# Separator sniffing (csv / txt)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("ext", ["csv", "txt"])
+def test_load_single_column_text_file(ext):
+    # Regression: sep=None sniffing used to pick a letter as the delimiter
+    # and shred the header ('value' -> 'alue').
+    raw = b"value\n1\n2\n3\n"
+    df = loader.load_dataframe(raw, f"single.{ext}")
+    assert list(df.columns) == ["value"]
+    assert df.shape == (3, 1)
+
+
+@pytest.mark.parametrize("sep", [",", ";", "\t", "|"])
+def test_load_delimited_variants(sep):
+    raw = f"a{sep}b\n1{sep}2\n3{sep}4\n".encode()
+    df = loader.load_dataframe(raw, "data.csv")
+    assert list(df.columns) == ["a", "b"]
+    assert df.shape == (2, 2)
+
+
+# ---------------------------------------------------------------------------
 # Failure modes: friendly LoaderError, never a raw traceback type
 # ---------------------------------------------------------------------------
 

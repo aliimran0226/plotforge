@@ -13,6 +13,7 @@ user - callbacks display it verbatim in an alert.
 from __future__ import annotations
 
 import base64
+import csv
 import io
 
 import pandas as pd
@@ -88,6 +89,21 @@ def list_sheets(raw: bytes, filename: str) -> list[str] | None:
         ) from exc
 
 
+def _sniff_separator(raw: bytes) -> str:
+    """Detect the delimiter of a text file, restricted to sane candidates.
+
+    ``pd.read_csv(sep=None)`` sniffs over *any* character, which mangles
+    single-column files (it can pick a letter as the delimiter). Sniff
+    over the usual suspects only and fall back to ',' - a comma is
+    harmless for a single-column file.
+    """
+    sample = raw[:8192].decode("utf-8", errors="replace")
+    try:
+        return csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
+    except csv.Error:
+        return ","
+
+
 def load_dataframe(raw: bytes, filename: str, sheet: str | None = None) -> pd.DataFrame:
     """Parse raw file bytes into a DataFrame.
 
@@ -109,8 +125,8 @@ def load_dataframe(raw: bytes, filename: str, sheet: str | None = None) -> pd.Da
             df = pd.read_excel(io.BytesIO(raw), sheet_name=sheet if sheet else 0)
         elif family == "tsv":
             df = pd.read_csv(io.BytesIO(raw), sep="\t")
-        else:  # csv / txt: let pandas sniff the separator (handles ';' etc.)
-            df = pd.read_csv(io.BytesIO(raw), sep=None, engine="python")
+        else:  # csv / txt: sniff the separator (handles ';', '\t', '|')
+            df = pd.read_csv(io.BytesIO(raw), sep=_sniff_separator(raw))
     except LoaderError:
         raise
     except UnicodeDecodeError as exc:
